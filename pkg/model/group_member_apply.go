@@ -95,6 +95,6 @@ func (d defaultGroupMemberApplyModel) genGroupMemberApplyTableName(id int64) str
 	return fmt.Sprintf("group_member_apply_%d", id%(d.shards))
 }
 
-func NewGroupMemberModel(db *gorm.DB, logger *logrus.Entry, snowflakeNode *snowflake.Node, shards int64) GroupMemberApplyModel {
+func NewGroupMemberApplyModel(db *gorm.DB, logger *logrus.Entry, snowflakeNode *snowflake.Node, shards int64) GroupMemberApplyModel {
 	return defaultGroupMemberApplyModel{db: db, logger: logger, snowflakeNode: snowflakeNode, shards: shards}
 }

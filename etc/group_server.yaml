@@ -9,7 +9,7 @@ IpWhiteList: 192.168.31.1/24, 192.168.1.1/24
 Node:
   MaxCount: 1024
   PollingInterval: 15
-Logg:
+Logger:
   Dir: logs
   RetainAge: 720
   RotationAge: 1
@@ -20,7 +20,7 @@ RedisSource:
   MaxOpenConn: 16
   ConnMaxLifeTime: 3600
   ConnMaxIdleTime: 3600
-DataSource:
+MysqlSource:
   Endpoint: ${MYSQL_ENDPOINT}
   Uri: "/thk_im?charset=utf8mb4&parseTime=True&loc=Local"
   MaxIdleConn: 10
