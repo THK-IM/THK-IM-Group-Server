@@ -1,6 +1,6 @@
 Name: group_server
 Host: 0.0.0.0
-Port: 41000
+Port: 13000
 Mode: debug
 # exposed外网暴露模式，校验用户token
 # backend后端模式，校验ip
