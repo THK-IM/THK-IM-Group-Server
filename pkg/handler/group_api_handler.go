@@ -14,16 +14,16 @@ func createGroup(appCtx *app.Context) gin.HandlerFunc {
 		req := &dto.CreateGroupReq{}
 		err := context.Bind(req)
 		if err != nil {
-			appCtx.Logger().Error("createGroup", err)
+			appCtx.Logger().Errorf("createGroup %v", err)
 			baseDto.ResponseBadRequest(context)
 		}
 
 		resp, errCreate := groupLogic.CreatGroup(req)
 		if errCreate != nil {
-			appCtx.Logger().Error("createGroup", err)
+			appCtx.Logger().Errorf("createGroup %v %v", req, errCreate)
 			baseDto.ResponseInternalServerError(context, errCreate)
 		} else {
-			appCtx.Logger().Info("createGroup", "success")
+			appCtx.Logger().Infof("createGroup %v %v", req, resp)
 			baseDto.ResponseSuccess(context, resp)
 		}
 	}
@@ -35,16 +35,16 @@ func joinGroup(appCtx *app.Context) gin.HandlerFunc {
 		req := &dto.JoinGroupReq{}
 		err := context.Bind(req)
 		if err != nil {
-			appCtx.Logger().Error("joinGroup", err)
+			appCtx.Logger().Errorf("joinGroup %v", err)
 			baseDto.ResponseBadRequest(context)
 		}
 
 		resp, errJoin := groupLogic.JoinGroup(req)
 		if errJoin != nil {
-			appCtx.Logger().Error("joinGroup", err)
+			appCtx.Logger().Errorf("joinGroup %v %v", req, errJoin)
 			baseDto.ResponseInternalServerError(context, errJoin)
 		} else {
-			appCtx.Logger().Info("joinGroup", "success")
+			appCtx.Logger().Infof("joinGroup %v %v", req, resp)
 			baseDto.ResponseSuccess(context, resp)
 		}
 	}
@@ -56,16 +56,16 @@ func deleteGroup(appCtx *app.Context) gin.HandlerFunc {
 		req := &dto.DeleteGroupReq{}
 		err := context.Bind(req)
 		if err != nil {
-			appCtx.Logger().Error("deleteGroup", err)
+			appCtx.Logger().Errorf("deleteGroup %v", err)
 			baseDto.ResponseBadRequest(context)
 		}
 
 		errDelete := groupLogic.DeleteGroup(req)
 		if errDelete != nil {
-			appCtx.Logger().Error("deleteGroup", err)
+			appCtx.Logger().Errorf("deleteGroup %v %v", req, errDelete)
 			baseDto.ResponseInternalServerError(context, errDelete)
 		} else {
-			appCtx.Logger().Info("deleteGroup", "success")
+			appCtx.Logger().Infof("deleteGroup %v", req)
 			baseDto.ResponseSuccess(context, nil)
 		}
 	}
@@ -83,16 +83,16 @@ func transferGroup(appCtx *app.Context) gin.HandlerFunc {
 		req := &dto.TransferGroupReq{}
 		err := context.Bind(req)
 		if err != nil {
-			appCtx.Logger().Error("transferGroup", err)
+			appCtx.Logger().Errorf("transferGroup %v", err)
 			baseDto.ResponseBadRequest(context)
 		}
 
 		errTransfer := groupLogic.TransferGroup(req)
 		if errTransfer != nil {
-			appCtx.Logger().Error("transferGroup", err)
+			appCtx.Logger().Errorf("transferGroup %v %v", req, errTransfer)
 			baseDto.ResponseInternalServerError(context, errTransfer)
 		} else {
-			appCtx.Logger().Info("transferGroup", "success")
+			appCtx.Logger().Infof("transferGroup %v", req)
 			baseDto.ResponseSuccess(context, nil)
 		}
 	}
@@ -104,16 +104,16 @@ func updateGroup(appCtx *app.Context) gin.HandlerFunc {
 		req := &dto.UpdateGroupReq{}
 		err := context.Bind(req)
 		if err != nil {
-			appCtx.Logger().Error("updateGroup", err)
+			appCtx.Logger().Errorf("updateGroup %v", err)
 			baseDto.ResponseBadRequest(context)
 		}
 
 		resp, errUpdate := groupLogic.UpdateGroup(req)
 		if errUpdate != nil {
-			appCtx.Logger().Error("updateGroup", err)
+			appCtx.Logger().Errorf("transferGroup %v %v", req, errUpdate)
 			baseDto.ResponseInternalServerError(context, errUpdate)
 		} else {
-			appCtx.Logger().Info("updateGroup", "success")
+			appCtx.Logger().Infof("transferGroup %v %v", req, resp)
 			baseDto.ResponseSuccess(context, resp)
 		}
 	}
