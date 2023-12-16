@@ -2,8 +2,8 @@ package model
 
 import (
 	"fmt"
-	"github.com/bwmarrin/snowflake"
 	"github.com/sirupsen/logrus"
+	"github.com/thk-im/thk-im-base-server/snowflake"
 	"gorm.io/gorm"
 	"time"
 )
@@ -31,8 +31,10 @@ type (
 	}
 
 	GroupModel interface {
+		NewGroupId() int64
 		FindGroup(groupId int64) (*Group, error)
-		CreateGroup(sessionId, ownerId int64, name, avatar, announce, qrcode string, extData *string, memberCount, enterFlag int) (*Group, error)
+		ResetGroupSessionId(id, sessionId int64) error
+		CreateGroup(id, sessionId, ownerId int64, name, avatar, announce, qrcode string, extData *string, memberCount, enterFlag int) (*Group, error)
 		UpdateGroup(groupId int64, name, avatar, announce, qrcode, extData *string, enterFlag, memberCount *int) error
 	}
 
@@ -44,6 +46,10 @@ type (
 	}
 )
 
+func (d defaultGroupModel) NewGroupId() int64 {
+	return d.snowflakeNode.Generate().Int64()
+}
+
 func (d defaultGroupModel) FindGroup(groupId int64) (*Group, error) {
 	tableName := d.genGroupTableName(groupId)
 	sql := fmt.Sprintf("select * from %s where id = ?", tableName)
@@ -52,8 +58,14 @@ func (d defaultGroupModel) FindGroup(groupId int64) (*Group, error) {
 	return group, err
 }
 
-func (d defaultGroupModel) CreateGroup(sessionId, ownerId int64, name, avatar, announce, qrcode string, extData *string, memberCount, enterFlag int) (*Group, error) {
-	id := d.snowflakeNode.Generate().Int64()
+func (d defaultGroupModel) ResetGroupSessionId(id, sessionId int64) error {
+	tableName := d.genGroupTableName(id)
+	updateMap := make(map[string]interface{})
+	updateMap["session_id"] = sessionId
+	return d.db.Table(tableName).Where("id=?", id).Updates(updateMap).Error
+}
+
+func (d defaultGroupModel) CreateGroup(id, sessionId, ownerId int64, name, avatar, announce, qrcode string, extData *string, memberCount, enterFlag int) (*Group, error) {
 	now := time.Now().UnixMilli()
 	group := &Group{
 		Id:          id,

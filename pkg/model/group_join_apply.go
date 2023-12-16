@@ -2,8 +2,8 @@ package model
 
 import (
 	"fmt"
-	"github.com/bwmarrin/snowflake"
 	"github.com/sirupsen/logrus"
+	"github.com/thk-im/thk-im-base-server/snowflake"
 	"gorm.io/gorm"
 	"time"
 )
@@ -92,7 +92,7 @@ func (d defaultGroupMemberApplyModel) ReviewApply(id, groupId int64, status int)
 }
 
 func (d defaultGroupMemberApplyModel) genGroupMemberApplyTableName(id int64) string {
-	return fmt.Sprintf("group_member_apply_%d", id%(d.shards))
+	return fmt.Sprintf("group_join_apply_%d", id%(d.shards))
 }
 
 func NewGroupMemberApplyModel(db *gorm.DB, logger *logrus.Entry, snowflakeNode *snowflake.Node, shards int64) GroupMemberApplyModel {

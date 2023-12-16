@@ -2,9 +2,9 @@ package loader
 
 import (
 	"fmt"
-	"github.com/bwmarrin/snowflake"
 	"github.com/sirupsen/logrus"
 	"github.com/thk-im/thk-im-base-server/conf"
+	"github.com/thk-im/thk-im-base-server/snowflake"
 	"github.com/thk-im/thk-im-group-server/pkg/model"
 	"gorm.io/gorm"
 	"os"
@@ -16,7 +16,7 @@ func LoadModels(modeConfigs []conf.Model, database *gorm.DB, logger *logrus.Entr
 		var m interface{}
 		if ms.Name == "group" {
 			m = model.NewGroupModelModel(database, logger, snowflakeNode, ms.Shards)
-		} else if ms.Name == "group_member_apply" {
+		} else if ms.Name == "group_join_apply" {
 			m = model.NewGroupMemberApplyModel(database, logger, snowflakeNode, ms.Shards)
 		}
 		modelMap[ms.Name] = m

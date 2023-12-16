@@ -3,10 +3,9 @@ module github.com/thk-im/thk-im-group-server
 go 1.19
 
 require (
-	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/thk-im/thk-im-base-server v0.0.0-20231213140705-e9bd6d4ec43a
+	github.com/thk-im/thk-im-base-server v0.0.0-20231216054809-e1cfc2de0824
 	gorm.io/gorm v1.25.5
 )
 

@@ -30,7 +30,7 @@ MysqlSource:
 Models:
   - Name: "group"
     Shards: 5
-  - Name: "group_member_apply"
+  - Name: "group_join_apply"
     Shards: 5
 Metric:
   Endpoint: "/metrics"
