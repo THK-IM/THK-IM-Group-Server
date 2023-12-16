@@ -5,6 +5,7 @@ import (
 	"github.com/thk-im/thk-im-base-server/server"
 	"github.com/thk-im/thk-im-group-server/pkg/loader"
 	"github.com/thk-im/thk-im-group-server/pkg/model"
+	msgSdk "github.com/thk-im/thk-im-msgapi-server/pkg/sdk"
 	userSdk "github.com/thk-im/thk-im-user-server/pkg/sdk"
 )
 
@@ -24,6 +25,9 @@ func (c *Context) UserApi() userSdk.UserApi {
 	return c.Context.SdkMap["user_api"].(userSdk.UserApi)
 }
 
+func (c *Context) MsgApi() msgSdk.MsgApi {
+	return c.Context.SdkMap["msg_api"].(msgSdk.MsgApi)
+}
 func (c *Context) Init(config *conf.Config) {
 	c.Context = &server.Context{}
 	c.Context.Init(config)
