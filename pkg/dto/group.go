@@ -2,6 +2,7 @@ package dto
 
 type Group struct {
 	Id          int64   `json:"id"`
+	DisplayId   string  `json:"display_id"`
 	OwnerId     int64   `json:"owner_id"`
 	SessionId   int64   `json:"session_id"`
 	Qrcode      string  `json:"qrcode"`
@@ -14,8 +15,11 @@ type Group struct {
 }
 
 type CreateGroupReq struct {
-	UserId  int64   `json:"user_id"`
-	Members []int64 `json:"members"`
+	UserId        int64   `json:"user_id"`
+	Members       []int64 `json:"members"`
+	GroupName     string  `json:"group_name"`
+	GroupAnnounce string  `json:"group_announce"` // 群公告
+	GroupType     int     `json:"group_type"`     // 2普通群，3 超级群
 }
 
 type CreateGroupRes struct {

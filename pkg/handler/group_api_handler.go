@@ -12,7 +12,7 @@ func createGroup(appCtx *app.Context) gin.HandlerFunc {
 	groupLogic := logic.NewGroupLogic(appCtx)
 	return func(context *gin.Context) {
 		req := &dto.CreateGroupReq{}
-		err := context.Bind(req)
+		err := context.BindJSON(req)
 		if err != nil {
 			appCtx.Logger().Errorf("createGroup %v", err)
 			baseDto.ResponseBadRequest(context)
@@ -110,10 +110,10 @@ func updateGroup(appCtx *app.Context) gin.HandlerFunc {
 
 		resp, errUpdate := groupLogic.UpdateGroup(req)
 		if errUpdate != nil {
-			appCtx.Logger().Errorf("transferGroup %v %v", req, errUpdate)
+			appCtx.Logger().Errorf("updateGroup %v %v", req, errUpdate)
 			baseDto.ResponseInternalServerError(context, errUpdate)
 		} else {
-			appCtx.Logger().Infof("transferGroup %v %v", req, resp)
+			appCtx.Logger().Infof("updateGroup %v %v", req, resp)
 			baseDto.ResponseSuccess(context, resp)
 		}
 	}

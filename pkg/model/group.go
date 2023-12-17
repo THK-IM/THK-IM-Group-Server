@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/thk-im/thk-im-base-server/snowflake"
 	"gorm.io/gorm"
+	"hash/crc32"
 	"time"
 )
 
@@ -17,6 +18,7 @@ const (
 type (
 	Group struct {
 		Id          int64   `gorm:"id"`
+		DisplayId   string  `gorm:"display_id"`
 		SessionId   int64   `gorm:"session_id"`
 		OwnerId     int64   `gorm:"owner_id"`
 		Name        string  `gorm:"name"`
@@ -30,11 +32,16 @@ type (
 		UpdateTime  int64   `gorm:"update_time"`
 	}
 
+	GroupDisplayId struct {
+		DisplayId string `gorm:"display_id"`
+		Id        int64  `gorm:"id"`
+	}
+
 	GroupModel interface {
 		NewGroupId() int64
 		FindGroup(groupId int64) (*Group, error)
 		ResetGroupSessionId(id, sessionId int64) error
-		CreateGroup(id, sessionId, ownerId int64, name, avatar, announce, qrcode string, extData *string, memberCount, enterFlag int) (*Group, error)
+		CreateGroup(id, sessionId, ownerId int64, displayId, name, avatar, announce, qrcode string, extData *string, memberCount, enterFlag int) (*Group, error)
 		UpdateGroup(groupId int64, name, avatar, announce, qrcode, extData *string, enterFlag, memberCount *int) error
 	}
 
@@ -65,10 +72,29 @@ func (d defaultGroupModel) ResetGroupSessionId(id, sessionId int64) error {
 	return d.db.Table(tableName).Where("id=?", id).Updates(updateMap).Error
 }
 
-func (d defaultGroupModel) CreateGroup(id, sessionId, ownerId int64, name, avatar, announce, qrcode string, extData *string, memberCount, enterFlag int) (*Group, error) {
+func (d defaultGroupModel) CreateGroup(id, sessionId, ownerId int64, displayId, name, avatar, announce, qrcode string, extData *string, memberCount, enterFlag int) (group *Group, err error) {
+	tx := d.db.Begin()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit().Error
+		}
+	}()
+	displayIdTableName := d.genGroupDisplayIdTableName(displayId)
+	groupDisplay := &GroupDisplayId{
+		DisplayId: displayId,
+		Id:        id,
+	}
+	err = tx.Table(displayIdTableName).Create(groupDisplay).Error
+	if err != nil {
+		return nil, err
+	}
+
 	now := time.Now().UnixMilli()
-	group := &Group{
+	group = &Group{
 		Id:          id,
+		DisplayId:   displayId,
 		SessionId:   sessionId,
 		OwnerId:     ownerId,
 		Name:        name,
@@ -82,7 +108,7 @@ func (d defaultGroupModel) CreateGroup(id, sessionId, ownerId int64, name, avata
 		UpdateTime:  now,
 	}
 	tableName := d.genGroupTableName(id)
-	err := d.db.Table(tableName).Create(group).Error
+	err = tx.Table(tableName).Create(group).Error
 	return group, err
 }
 
@@ -115,6 +141,11 @@ func (d defaultGroupModel) UpdateGroup(groupId int64, name, avatar, announce, qr
 
 func (d defaultGroupModel) genGroupTableName(id int64) string {
 	return fmt.Sprintf("group_%d", id%(d.shards))
+}
+
+func (d defaultGroupModel) genGroupDisplayIdTableName(displayId string) string {
+	sum := int64(crc32.ChecksumIEEE([]byte(displayId)))
+	return fmt.Sprintf("group_display_%d", sum%d.shards)
 }
 
 func NewGroupModelModel(db *gorm.DB, logger *logrus.Entry, snowflakeNode *snowflake.Node, shards int64) GroupModel {

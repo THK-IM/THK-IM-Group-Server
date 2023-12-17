@@ -1,10 +1,10 @@
 Name: group_server
 Host: 0.0.0.0
-Port: 13000
+Port: 16000
 Mode: debug
 # exposed外网暴露模式，校验用户token
 # backend后端模式，校验ip
-DeployMode: "exposed"
+DeployMode: "backend"
 IpWhiteList: 192.168.31.1/24, 192.168.1.1/24
 Node:
   MaxCount: 1024
@@ -27,8 +27,16 @@ MysqlSource:
   MaxOpenConn: 20
   ConnMaxLifeTime: 3600
   ConnMaxIdleTime: 3600
+ObjectStorage:
+  Endpoint: ${OS_Endpoint}
+  Bucket: ${OS_BUCKET}
+  AK: ${OS_AK}
+  SK: ${OS_SK}
+  Region: us-east-1
 Models:
   - Name: "group"
+    Shards: 5
+  - Name: "group_display"
     Shards: 5
   - Name: "group_join_apply"
     Shards: 5
