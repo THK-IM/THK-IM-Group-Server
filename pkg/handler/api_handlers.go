@@ -30,7 +30,7 @@ func RegisterGroupApiHandlers(appCtx *app.Context) {
 		groupRoute.POST("", createGroup(appCtx))                     // 创建群
 		groupRoute.GET("/:id", queryGroup(appCtx))                   // 查询群资料
 		groupRoute.PUT("/:id", updateGroup(appCtx))                  // 修改群信息
-		groupRoute.PUT("/:id/join", joinGroup(appCtx))               // 加入群
+		groupRoute.POST("/:id/join", joinGroup(appCtx))              // 加入群
 		groupRoute.DELETE("/:id", deleteGroup(appCtx))               // 删除群
 		groupRoute.POST("/:id/transfer", transferGroup(appCtx))      // 转让群
 		groupRoute.GET("/:id/apply", queryJoinGroupApply(appCtx))    // 查询群申请列表

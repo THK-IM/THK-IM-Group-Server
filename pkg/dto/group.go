@@ -46,7 +46,7 @@ type DeleteGroupReq struct {
 
 type JoinGroupReq struct {
 	UserId  int64 `json:"user_id"`
-	GroupId int64 `json:"group_id"`
+	GroupId int64
 }
 
 type JoinGroupRes struct {

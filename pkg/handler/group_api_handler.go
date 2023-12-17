@@ -6,8 +6,10 @@ import (
 	"github.com/thk-im/thk-im-group-server/pkg/app"
 	"github.com/thk-im/thk-im-group-server/pkg/dto"
 	"github.com/thk-im/thk-im-group-server/pkg/logic"
+	"strconv"
 )
 
+// curl -i -X POST -d '{"user_id": 1, "members": [5, 6], "group_name": "1-group", "group_announce": "12143242423", "group_type": 2}' "http://192.168.1.9:16000/group"
 func createGroup(appCtx *app.Context) gin.HandlerFunc {
 	groupLogic := logic.NewGroupLogic(appCtx)
 	return func(context *gin.Context) {
@@ -29,15 +31,23 @@ func createGroup(appCtx *app.Context) gin.HandlerFunc {
 	}
 }
 
+// curl -i -X POST -d '{"user_id": 90}' "http://192.168.1.9:16000/group/1736282436255359732/join"
 func joinGroup(appCtx *app.Context) gin.HandlerFunc {
 	groupLogic := logic.NewGroupLogic(appCtx)
 	return func(context *gin.Context) {
+		groupId, errGroupId := strconv.ParseInt(context.Param("id"), 10, 64)
+		if errGroupId != nil {
+			appCtx.Logger().Errorf("joinGroup %v", errGroupId)
+			baseDto.ResponseBadRequest(context)
+			return
+		}
 		req := &dto.JoinGroupReq{}
-		err := context.Bind(req)
+		err := context.BindJSON(req)
 		if err != nil {
 			appCtx.Logger().Errorf("joinGroup %v", err)
 			baseDto.ResponseBadRequest(context)
 		}
+		req.GroupId = groupId
 
 		resp, errJoin := groupLogic.JoinGroup(req)
 		if errJoin != nil {
@@ -54,7 +64,7 @@ func deleteGroup(appCtx *app.Context) gin.HandlerFunc {
 	groupLogic := logic.NewGroupLogic(appCtx)
 	return func(context *gin.Context) {
 		req := &dto.DeleteGroupReq{}
-		err := context.Bind(req)
+		err := context.BindJSON(req)
 		if err != nil {
 			appCtx.Logger().Errorf("deleteGroup %v", err)
 			baseDto.ResponseBadRequest(context)
@@ -81,7 +91,7 @@ func transferGroup(appCtx *app.Context) gin.HandlerFunc {
 	groupLogic := logic.NewGroupLogic(appCtx)
 	return func(context *gin.Context) {
 		req := &dto.TransferGroupReq{}
-		err := context.Bind(req)
+		err := context.BindJSON(req)
 		if err != nil {
 			appCtx.Logger().Errorf("transferGroup %v", err)
 			baseDto.ResponseBadRequest(context)
@@ -102,7 +112,7 @@ func updateGroup(appCtx *app.Context) gin.HandlerFunc {
 	groupLogic := logic.NewGroupLogic(appCtx)
 	return func(context *gin.Context) {
 		req := &dto.UpdateGroupReq{}
-		err := context.Bind(req)
+		err := context.BindJSON(req)
 		if err != nil {
 			appCtx.Logger().Errorf("updateGroup %v", err)
 			baseDto.ResponseBadRequest(context)

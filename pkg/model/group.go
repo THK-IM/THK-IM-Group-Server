@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	EnterFlagNoReview = iota
-	EnterFlagNeedReview
-	EnterFlagAdminInvite
+	EnterFlagNoReview    = iota // 任意进群
+	EnterFlagNeedReview         // 需要审核后进群
+	EnterFlagAdminInvite        // 需要管理员邀请才能加入群
 )
 
 type (
@@ -38,6 +38,7 @@ type (
 	}
 
 	GroupModel interface {
+		AddGroupMember(groupId int64, count int) error
 		NewGroupId() int64
 		FindGroup(groupId int64) (*Group, error)
 		ResetGroupSessionId(id, sessionId int64) error
@@ -52,6 +53,12 @@ type (
 		snowflakeNode *snowflake.Node
 	}
 )
+
+func (d defaultGroupModel) AddGroupMember(groupId int64, count int) error {
+	tableName := d.genGroupTableName(groupId)
+	sql := fmt.Sprintf("update %s set member_count = member_count + ? where id = ? ", tableName)
+	return d.db.Raw(sql, count, groupId).Error
+}
 
 func (d defaultGroupModel) NewGroupId() int64 {
 	return d.snowflakeNode.Generate().Int64()

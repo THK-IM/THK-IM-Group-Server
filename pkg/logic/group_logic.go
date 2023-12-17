@@ -5,8 +5,10 @@ import (
 	"github.com/skip2/go-qrcode"
 	"github.com/thk-im/thk-im-group-server/pkg/app"
 	"github.com/thk-im/thk-im-group-server/pkg/dto"
+	"github.com/thk-im/thk-im-group-server/pkg/errorx"
 	"github.com/thk-im/thk-im-group-server/pkg/model"
 	msgDto "github.com/thk-im/thk-im-msgapi-server/pkg/dto"
+	msgModel "github.com/thk-im/thk-im-msgapi-server/pkg/model"
 	"image/color"
 	"strconv"
 	"time"
@@ -69,19 +71,7 @@ func (g *GroupLogic) CreatGroup(req *dto.CreateGroupReq) (*dto.CreateGroupRes, e
 		return nil, errReset
 	}
 	createGroupRes := &dto.CreateGroupRes{
-		Group: &dto.Group{
-			Id:          groupId,
-			DisplayId:   group.DisplayId,
-			OwnerId:     req.UserId,
-			SessionId:   createSessionResp.SId,
-			Qrcode:      group.Qrcode,
-			MemberCount: group.MemberCount,
-			Name:        group.Name,
-			Avatar:      group.Avatar,
-			Announce:    group.Announce,
-			ExtData:     group.ExtData,
-			EnterFlag:   group.EnterFlag,
-		},
+		Group: g.groupModel2Dto(group),
 	}
 	return createGroupRes, nil
 }
@@ -91,7 +81,32 @@ func (g *GroupLogic) UpdateGroup(req *dto.UpdateGroupReq) (*dto.CreateGroupRes, 
 }
 
 func (g *GroupLogic) JoinGroup(req *dto.JoinGroupReq) (*dto.JoinGroupRes, error) {
-	return nil, nil
+	group, err := g.appCtx.GroupModel().FindGroup(req.GroupId)
+	if err != nil {
+		return nil, err
+	}
+	if group == nil {
+		return nil, errorx.ErrGroupNotExisted
+	}
+	if group.EnterFlag != model.EnterFlagNoReview {
+		return nil, errorx.ErrGroupJoinNeedApply
+	}
+	addSessionReq := &msgDto.SessionAddUserReq{
+		EntityId: group.Id,
+		UIds:     []int64{req.UserId},
+		Role:     msgModel.SessionMember,
+	}
+	err = g.appCtx.MsgApi().AddSessionUser(group.SessionId, addSessionReq)
+	if err != nil {
+		return nil, err
+	}
+	_ = g.appCtx.GroupModel().AddGroupMember(group.Id, 1)
+	group.MemberCount += 1
+
+	joinGroupRes := &dto.JoinGroupRes{
+		Group: g.groupModel2Dto(group),
+	}
+	return joinGroupRes, nil
 }
 
 func (g *GroupLogic) DeleteGroup(req *dto.DeleteGroupReq) error {
@@ -104,4 +119,20 @@ func (g *GroupLogic) TransferGroup(req *dto.TransferGroupReq) error {
 
 func (g *GroupLogic) QueryGroupList(req *dto.QueryGroupListReq) (*dto.QueryGroupListResp, error) {
 	return nil, nil
+}
+
+func (g *GroupLogic) groupModel2Dto(group *model.Group) *dto.Group {
+	return &dto.Group{
+		Id:          group.Id,
+		DisplayId:   group.DisplayId,
+		OwnerId:     group.OwnerId,
+		SessionId:   group.SessionId,
+		Qrcode:      group.Qrcode,
+		MemberCount: group.MemberCount,
+		Name:        group.Name,
+		Avatar:      group.Avatar,
+		Announce:    group.Announce,
+		ExtData:     group.ExtData,
+		EnterFlag:   group.EnterFlag,
+	}
 }
