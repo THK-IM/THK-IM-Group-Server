@@ -13,5 +13,6 @@ CREATE TABLE IF NOT EXISTS `group_%s`
     `enter_flag`   INT          NOT NULL default 0 COMMENT '进群条件，0 扫码或通过群id随意进群，1 申请通过后可以进入 2 管理员邀请 ',
     `update_time`  BIGINT       NOT NULL DEFAULT 0 COMMENT '创建时间 毫秒',
     `create_time`  BIGINT       NOT NULL DEFAULT 0 COMMENT '创建时间 毫秒',
+    `deleted`      TINYINT      NOT NULL DEFAULT 0 COMMENT '是否删除',
     UNIQUE INDEX `Group_IDX` (`id`)
 );

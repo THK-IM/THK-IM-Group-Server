@@ -30,11 +30,13 @@ type (
 		EnterFlag   int     `gorm:"enter_flag"`
 		CreateTime  int64   `gorm:"create_time"`
 		UpdateTime  int64   `gorm:"update_time"`
+		Deleted     int8    `gorm:"deleted"`
 	}
 
 	GroupDisplayId struct {
 		DisplayId string `gorm:"display_id"`
 		Id        int64  `gorm:"id"`
+		Deleted   int8   `gorm:"deleted"`
 	}
 
 	GroupModel interface {
@@ -44,6 +46,7 @@ type (
 		ResetGroupSessionId(id, sessionId int64) error
 		CreateGroup(id, sessionId, ownerId int64, displayId, name, avatar, announce, qrcode string, extData *string, memberCount, enterFlag int) (*Group, error)
 		UpdateGroup(groupId int64, name, avatar, announce, qrcode, extData *string, enterFlag, memberCount *int) error
+		DelGroup(id int64) error
 	}
 
 	defaultGroupModel struct {
@@ -66,7 +69,7 @@ func (d defaultGroupModel) NewGroupId() int64 {
 
 func (d defaultGroupModel) FindGroup(groupId int64) (*Group, error) {
 	tableName := d.genGroupTableName(groupId)
-	sql := fmt.Sprintf("select * from %s where id = ?", tableName)
+	sql := fmt.Sprintf("select * from %s where id = ? and deleted = 0", tableName)
 	group := &Group{}
 	err := d.db.Raw(sql, groupId).Scan(group).Error
 	return group, err
@@ -144,6 +147,39 @@ func (d defaultGroupModel) UpdateGroup(groupId int64, name, avatar, announce, qr
 	}
 	updateMap["update_time"] = time.Now().UnixMilli()
 	return d.db.Table(d.genGroupTableName(groupId)).Where("id = ?", groupId).Updates(updateMap).Error
+}
+
+func (d defaultGroupModel) DelGroup(groupId int64) (err error) {
+	tx := d.db.Begin()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit().Error
+		}
+	}()
+	tableName := d.genGroupTableName(groupId)
+	sql := fmt.Sprintf("select * from %s where id = ? and deleted = 0", tableName)
+	group := &Group{}
+	err = d.db.Raw(sql, groupId).Scan(group).Error
+	if err != nil {
+		return
+	}
+	if group.Id == 0 {
+		return nil
+	}
+	now := time.Now().UnixMilli()
+	sql = fmt.Sprintf("update %s set deleted = 1, update_time = ? where id = ?", tableName)
+	err = d.db.Exec(sql, now, groupId).Error
+	if err != nil {
+		return
+	}
+
+	tableName = d.genGroupDisplayIdTableName(group.DisplayId)
+	sql = fmt.Sprintf("update %s set deleted = 1, update_time = ? where id = ?", tableName)
+	err = d.db.Exec(sql, now, groupId).Error
+
+	return
 }
 
 func (d defaultGroupModel) genGroupTableName(id int64) string {

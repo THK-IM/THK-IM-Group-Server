@@ -110,7 +110,41 @@ func (g *GroupLogic) JoinGroup(req *dto.JoinGroupReq) (*dto.JoinGroupRes, error)
 }
 
 func (g *GroupLogic) DeleteGroup(req *dto.DeleteGroupReq) error {
-	return nil
+	group, err := g.appCtx.GroupModel().FindGroup(req.GroupId)
+	if err != nil {
+		return err
+	}
+	if group == nil || group.Id == 0 {
+		return errorx.ErrGroupNotExisted
+	}
+	sessionUser, errSu := g.appCtx.MsgApi().QuerySessionUser(group.SessionId, req.UserId)
+	if errSu != nil {
+		return errSu
+	}
+
+	if sessionUser.Role == msgModel.SessionOwner {
+		// 群主解散群
+		delReq := &msgDto.DelSessionReq{
+			Id: group.SessionId,
+		}
+		errDel := g.appCtx.MsgApi().DelSession(group.SessionId, delReq)
+		if errDel != nil {
+			return errDel
+		} else {
+			return g.appCtx.GroupModel().DelGroup(group.Id)
+		}
+	} else {
+		// 群成员退出群
+		delReq := &msgDto.SessionDelUserReq{
+			UIds: []int64{req.UserId},
+		}
+		errDel := g.appCtx.MsgApi().DelSessionUser(group.SessionId, delReq)
+		if errDel != nil {
+			return errDel
+		} else {
+			return g.appCtx.GroupModel().AddGroupMember(group.Id, -1)
+		}
+	}
 }
 
 func (g *GroupLogic) TransferGroup(req *dto.TransferGroupReq) error {
