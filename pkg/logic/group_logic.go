@@ -76,8 +76,44 @@ func (g *GroupLogic) CreatGroup(req *dto.CreateGroupReq) (*dto.CreateGroupRes, e
 	return createGroupRes, nil
 }
 
-func (g *GroupLogic) UpdateGroup(req *dto.UpdateGroupReq) (*dto.CreateGroupRes, error) {
-	return nil, nil
+func (g *GroupLogic) UpdateGroup(req *dto.UpdateGroupReq) (*dto.UpdateGroupRes, error) {
+	group, err := g.appCtx.GroupModel().FindGroup(req.GroupId)
+	if err != nil {
+		return nil, err
+	}
+	if group == nil || group.Id == 0 {
+		return nil, errorx.ErrGroupNotExisted
+	}
+	sessionUser, errSu := g.appCtx.MsgApi().QuerySessionUser(group.SessionId, req.UserId)
+	if errSu != nil {
+		return nil, errSu
+	}
+	if sessionUser.Role == msgModel.SessionMember {
+		return nil, errorx.ErrGroupPermission
+	}
+
+	err = g.appCtx.GroupModel().UpdateGroup(group.Id, req.Name, req.Avatar, req.Announce, nil, req.ExtData, req.EnterFlag)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Name != nil {
+		group.Name = *req.Name
+	}
+	if req.Avatar != nil {
+		group.Avatar = *req.Avatar
+	}
+	if req.Announce != nil {
+		group.Announce = *req.Announce
+	}
+	group.ExtData = req.ExtData
+	if req.EnterFlag != nil {
+		group.EnterFlag = *req.EnterFlag
+	}
+	res := &dto.UpdateGroupRes{
+		Group: g.groupModel2Dto(group),
+	}
+	return res, nil
 }
 
 func (g *GroupLogic) JoinGroup(req *dto.JoinGroupReq) (*dto.JoinGroupRes, error) {
@@ -148,11 +184,18 @@ func (g *GroupLogic) DeleteGroup(req *dto.DeleteGroupReq) error {
 }
 
 func (g *GroupLogic) TransferGroup(req *dto.TransferGroupReq) error {
-	return nil
-}
+	group, err := g.appCtx.GroupModel().FindGroup(req.GroupId)
+	if err != nil {
+		return err
+	}
+	if group == nil || group.Id == 0 {
+		return errorx.ErrGroupNotExisted
+	}
+	if group.OwnerId != req.UId {
+		return errorx.ErrGroupPermission
+	}
 
-func (g *GroupLogic) QueryGroupList(req *dto.QueryGroupListReq) (*dto.QueryGroupListResp, error) {
-	return nil, nil
+	return g.appCtx.GroupModel().UpdateGroupOwner(req.GroupId, req.ToUId)
 }
 
 func (g *GroupLogic) groupModel2Dto(group *model.Group) *dto.Group {

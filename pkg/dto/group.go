@@ -27,6 +27,7 @@ type CreateGroupRes struct {
 }
 
 type UpdateGroupReq struct {
+	GroupId   int64   `json:"group_id"`
 	UserId    int64   `json:"user_id"`
 	Name      *string `json:"name"`
 	Avatar    *string `json:"avatar"`

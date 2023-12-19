@@ -40,12 +40,13 @@ type (
 	}
 
 	GroupModel interface {
+		UpdateGroupOwner(groupId, ownerId int64) error
 		AddGroupMember(groupId int64, count int) error
 		NewGroupId() int64
 		FindGroup(groupId int64) (*Group, error)
 		ResetGroupSessionId(id, sessionId int64) error
 		CreateGroup(id, sessionId, ownerId int64, displayId, name, avatar, announce, qrcode string, extData *string, memberCount, enterFlag int) (*Group, error)
-		UpdateGroup(groupId int64, name, avatar, announce, qrcode, extData *string, enterFlag, memberCount *int) error
+		UpdateGroup(groupId int64, name, avatar, announce, qrcode, extData *string, enterFlag *int) error
 		DelGroup(id int64) error
 	}
 
@@ -56,6 +57,12 @@ type (
 		snowflakeNode *snowflake.Node
 	}
 )
+
+func (d defaultGroupModel) UpdateGroupOwner(groupId, ownerId int64) error {
+	tableName := d.genGroupTableName(groupId)
+	sql := fmt.Sprintf("update %s set owner_id = ? where id = ? ", tableName)
+	return d.db.Raw(sql, ownerId, groupId).Error
+}
 
 func (d defaultGroupModel) AddGroupMember(groupId int64, count int) error {
 	tableName := d.genGroupTableName(groupId)
@@ -122,7 +129,7 @@ func (d defaultGroupModel) CreateGroup(id, sessionId, ownerId int64, displayId, 
 	return group, err
 }
 
-func (d defaultGroupModel) UpdateGroup(groupId int64, name, avatar, announce, qrcode, extData *string, enterFlag, memberCount *int) error {
+func (d defaultGroupModel) UpdateGroup(groupId int64, name, avatar, announce, qrcode, extData *string, enterFlag *int) error {
 	if name == nil && avatar == nil && announce == nil && qrcode == nil && extData == nil && enterFlag == nil {
 		return nil
 	}
