@@ -46,14 +46,14 @@ func (g *GroupLogic) CreatGroup(req *dto.CreateGroupReq) (*dto.CreateGroupRes, e
 		qrcodeUrl = &emptyStr
 	}
 
-	group, err := g.appCtx.GroupModel().CreateGroup(groupId, 0, req.UserId, displayId, req.GroupName,
+	group, err := g.appCtx.GroupModel().CreateGroup(groupId, 0, req.UId, displayId, req.GroupName,
 		"", req.GroupAnnounce, *qrcodeUrl, nil, memberCount, model.EnterFlagNoReview,
 	)
 	if err != nil {
 		return nil, err
 	}
 	createSessionReq := &msgDto.CreateSessionReq{
-		UId:      req.UserId,
+		UId:      req.UId,
 		Type:     req.GroupType,
 		EntityId: groupId,
 		Members:  req.Members,
@@ -84,11 +84,11 @@ func (g *GroupLogic) UpdateGroup(req *dto.UpdateGroupReq) (*dto.UpdateGroupRes, 
 	if group == nil || group.Id == 0 {
 		return nil, errorx.ErrGroupNotExisted
 	}
-	sessionUser, errSu := g.appCtx.MsgApi().QuerySessionUser(group.SessionId, req.UserId)
+	sessionUser, errSu := g.appCtx.MsgApi().QuerySessionUser(group.SessionId, req.UId)
 	if errSu != nil {
 		return nil, errSu
 	}
-	if sessionUser.Role == msgModel.SessionMember {
+	if sessionUser.SId == 0 || sessionUser.Role == msgModel.SessionMember {
 		return nil, errorx.ErrGroupPermission
 	}
 
@@ -124,12 +124,15 @@ func (g *GroupLogic) JoinGroup(req *dto.JoinGroupReq) (*dto.JoinGroupRes, error)
 	if group == nil {
 		return nil, errorx.ErrGroupNotExisted
 	}
-	if group.EnterFlag != model.EnterFlagNoReview {
+	if group.EnterFlag == model.EnterFlagNoReview {
 		return nil, errorx.ErrGroupJoinNeedApply
+	}
+	if group.EnterFlag == model.EnterFlagAdminInvite {
+		return nil, errorx.ErrGroupJoinNeedAdminInvite
 	}
 	addSessionReq := &msgDto.SessionAddUserReq{
 		EntityId: group.Id,
-		UIds:     []int64{req.UserId},
+		UIds:     []int64{req.UId},
 		Role:     msgModel.SessionMember,
 	}
 	err = g.appCtx.MsgApi().AddSessionUser(group.SessionId, addSessionReq)
@@ -153,11 +156,13 @@ func (g *GroupLogic) DeleteGroup(req *dto.DeleteGroupReq) error {
 	if group == nil || group.Id == 0 {
 		return errorx.ErrGroupNotExisted
 	}
-	sessionUser, errSu := g.appCtx.MsgApi().QuerySessionUser(group.SessionId, req.UserId)
+	sessionUser, errSu := g.appCtx.MsgApi().QuerySessionUser(group.SessionId, req.UId)
 	if errSu != nil {
 		return errSu
 	}
-
+	if sessionUser.SId == 0 {
+		return errorx.ErrGroupPermission
+	}
 	if sessionUser.Role == msgModel.SessionOwner {
 		// 群主解散群
 		delReq := &msgDto.DelSessionReq{
@@ -172,7 +177,7 @@ func (g *GroupLogic) DeleteGroup(req *dto.DeleteGroupReq) error {
 	} else {
 		// 群成员退出群
 		delReq := &msgDto.SessionDelUserReq{
-			UIds: []int64{req.UserId},
+			UIds: []int64{req.UId},
 		}
 		errDel := g.appCtx.MsgApi().DelSessionUser(group.SessionId, delReq)
 		if errDel != nil {

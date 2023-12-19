@@ -15,7 +15,7 @@ type Group struct {
 }
 
 type CreateGroupReq struct {
-	UserId        int64   `json:"user_id"`
+	UId           int64   `json:"u_id"`
 	Members       []int64 `json:"members"`
 	GroupName     string  `json:"group_name"`
 	GroupAnnounce string  `json:"group_announce"` // 群公告
@@ -28,7 +28,7 @@ type CreateGroupRes struct {
 
 type UpdateGroupReq struct {
 	GroupId   int64   `json:"group_id"`
-	UserId    int64   `json:"user_id"`
+	UId       int64   `json:"u_id"`
 	Name      *string `json:"name"`
 	Avatar    *string `json:"avatar"`
 	Announce  *string `json:"announce"`
@@ -41,12 +41,12 @@ type UpdateGroupRes struct {
 }
 
 type DeleteGroupReq struct {
-	UserId  int64 `json:"user_id"`
+	UId     int64 `json:"u_id"`
 	GroupId int64 `json:"group_id"`
 }
 
 type JoinGroupReq struct {
-	UserId  int64 `json:"user_id"`
+	UId     int64 `json:"u_id"`
 	GroupId int64
 }
 
@@ -61,7 +61,7 @@ type TransferGroupReq struct {
 }
 
 type QueryGroupListReq struct {
-	UserId int64 `json:"user_id" form:"user_id"`
+	UId    int64 `json:"u_id"`
 	Count  int   `json:"count" form:"count"`
 	Offset int   `json:"offset" form:"offset"`
 }

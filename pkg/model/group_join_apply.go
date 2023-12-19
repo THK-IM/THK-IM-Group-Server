@@ -36,8 +36,9 @@ type (
 	}
 
 	GroupMemberApplyModel interface {
-		findOneById(id, groupId int64) (*GroupMemberApply, error)
-		findOneByUIdAndGroupId(uId, groupId int64) (*GroupMemberApply, error)
+		FindGroupApplies(groupId int64, status *int, count, offset int) ([]*GroupMemberApply, int, error)
+		FindOneById(id, groupId int64) (*GroupMemberApply, error)
+		FindOneByUIdAndGroupId(uId, groupId int64) (*GroupMemberApply, error)
 		InsertApply(groupId, applyUserId int64, inviteUserId, reviewUserId *int64, channel, status int, content string) (*GroupMemberApply, error)
 		ReviewApply(id, groupId int64, status int) error
 	}
@@ -50,7 +51,29 @@ type (
 	}
 )
 
-func (d defaultGroupMemberApplyModel) findOneById(id, groupId int64) (*GroupMemberApply, error) {
+func (d defaultGroupMemberApplyModel) FindGroupApplies(groupId int64, status *int, count, offset int) ([]*GroupMemberApply, int, error) {
+	tableName := d.genGroupMemberApplyTableName(groupId)
+	total := int(0)
+	sql := fmt.Sprintf("select count(0) from %s where group_id = ? ", tableName)
+	if status != nil {
+		sql += fmt.Sprintf("and status = %d", *status)
+	}
+	err := d.db.Raw(sql, groupId).Scan(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	applies := make([]*GroupMemberApply, 0)
+	sql = fmt.Sprintf("select * from %s where group_id = ? ", tableName)
+	if status != nil {
+		sql += fmt.Sprintf("and status = %d ", *status)
+	}
+	sql += fmt.Sprintf("order by update_time desc limit %d, %d ", count, offset)
+	err = d.db.Raw(sql, groupId).Scan(&applies).Error
+	return applies, total, err
+}
+
+func (d defaultGroupMemberApplyModel) FindOneById(id, groupId int64) (*GroupMemberApply, error) {
 	tableName := d.genGroupMemberApplyTableName(groupId)
 	sql := fmt.Sprintf("select * from %s where id = ?", tableName)
 	apply := &GroupMemberApply{}
@@ -58,7 +81,7 @@ func (d defaultGroupMemberApplyModel) findOneById(id, groupId int64) (*GroupMemb
 	return apply, err
 }
 
-func (d defaultGroupMemberApplyModel) findOneByUIdAndGroupId(uId, groupId int64) (*GroupMemberApply, error) {
+func (d defaultGroupMemberApplyModel) FindOneByUIdAndGroupId(uId, groupId int64) (*GroupMemberApply, error) {
 	tableName := d.genGroupMemberApplyTableName(groupId)
 	sql := fmt.Sprintf("select * from %s where group_id = ? and apply_user_id = ? order by create_time desc limit 0, 1", tableName)
 	apply := &GroupMemberApply{}
