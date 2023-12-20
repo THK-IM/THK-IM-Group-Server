@@ -15,6 +15,11 @@ const (
 )
 
 const (
+	TypeInvite = 1
+	TypeApply  = 2
+)
+
+const (
 	ApplyChannelGroupId = iota + 1
 	ApplyChannelQRCode
 	ApplyChannelInvite
@@ -26,11 +31,12 @@ type (
 		Id           int64  `gorm:"id"`
 		GroupId      int64  `gorm:"group_id"`
 		ApplyUserId  int64  `gorm:"apply_user_id"`
-		InviteUserId *int64 `gorm:"invite_user_id"`
-		ReviewUserId *int64 `gorm:"review_user_id"`
 		Channel      int    `gorm:"channel"`
-		Status       int    `gorm:"status"`
 		Content      string `gorm:"content"`
+		Type         int8   `gorm:"type"`
+		UIds         string `json:"u_ids"`
+		Status       int    `gorm:"status"`
+		ReviewUserId *int64 `gorm:"review_user_id"`
 		CreateTime   int64  `gorm:"create_time"`
 		UpdateTime   int64  `gorm:"update_time"`
 	}
@@ -39,7 +45,7 @@ type (
 		FindGroupApplies(groupId int64, status *int, count, offset int) ([]*GroupMemberApply, int, error)
 		FindOneById(id, groupId int64) (*GroupMemberApply, error)
 		FindOneByUIdAndGroupId(uId, groupId int64) (*GroupMemberApply, error)
-		InsertApply(groupId, applyUserId int64, inviteUserId, reviewUserId *int64, channel, status int, content string) (*GroupMemberApply, error)
+		InsertApply(groupId, applyUserId int64, reviewUserId *int64, channel, status int, uIds, content string, applyType int8) (*GroupMemberApply, error)
 		ReviewApply(id, groupId int64, status int) error
 	}
 
@@ -89,14 +95,15 @@ func (d defaultGroupMemberApplyModel) FindOneByUIdAndGroupId(uId, groupId int64)
 	return apply, err
 }
 
-func (d defaultGroupMemberApplyModel) InsertApply(groupId, applyUserId int64, inviteUserId, reviewUserId *int64, channel, status int, content string) (*GroupMemberApply, error) {
+func (d defaultGroupMemberApplyModel) InsertApply(groupId, applyUserId int64, reviewUserId *int64, channel, status int, uIds, content string, applyType int8) (*GroupMemberApply, error) {
 	tableName := d.genGroupMemberApplyTableName(groupId)
 	now := time.Now().UnixMilli()
 	apply := &GroupMemberApply{
 		Id:           d.snowflakeNode.Generate().Int64(),
 		GroupId:      groupId,
 		ApplyUserId:  applyUserId,
-		InviteUserId: inviteUserId,
+		UIds:         uIds,
+		Type:         applyType,
 		ReviewUserId: reviewUserId,
 		Channel:      channel,
 		Status:       status,

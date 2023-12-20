@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"fmt"
 	baseErrorx "github.com/thk-im/thk-im-base-server/errorx"
 	"github.com/thk-im/thk-im-group-server/pkg/app"
 	"github.com/thk-im/thk-im-group-server/pkg/dto"
@@ -8,6 +9,8 @@ import (
 	"github.com/thk-im/thk-im-group-server/pkg/model"
 	msgDto "github.com/thk-im/thk-im-msgapi-server/pkg/dto"
 	msgModel "github.com/thk-im/thk-im-msgapi-server/pkg/model"
+	"strconv"
+	"strings"
 )
 
 type GroupApplyLogic struct {
@@ -29,7 +32,7 @@ func (l *GroupApplyLogic) CreateJoinGroupApply(req *dto.JoinGroupApplyReq) error
 	if group.EnterFlag == model.EnterFlagAdminInvite {
 		return errorx.ErrGroupJoinNeedAdminInvite
 	}
-	_, err = l.appCtx.GroupMemberApplyModel().InsertApply(group.Id, req.UId, nil, nil, req.Channel, model.ApplyStatusInit, req.Content)
+	_, err = l.appCtx.GroupMemberApplyModel().InsertApply(group.Id, req.UId, nil, req.Channel, model.ApplyStatusInit, fmt.Sprintf("%d", req.UId), req.Content, model.TypeApply)
 	return err
 }
 
@@ -78,6 +81,15 @@ func (l *GroupApplyLogic) ReviewJoinGroupApply(req *dto.ReviewJoinGroupReq) erro
 }
 
 func (l *GroupApplyLogic) InviteJoinGroup(req *dto.InviteJoinGroupReq) error {
+	strUIds := strings.Split(req.InviteUIds, "#")
+	uIds := make([]int64, 0)
+	for _, strUId := range strUIds {
+		uId, errStr := strconv.ParseInt(strUId, 10, 64)
+		if errStr != nil {
+			return baseErrorx.ErrParamsError
+		}
+		uIds = append(uIds, uId)
+	}
 	group, err := l.appCtx.GroupModel().FindGroup(req.GroupId)
 	if err != nil {
 		return err
@@ -88,26 +100,24 @@ func (l *GroupApplyLogic) InviteJoinGroup(req *dto.InviteJoinGroupReq) error {
 	if group.EnterFlag == model.EnterFlagAdminInvite {
 		return errorx.ErrGroupJoinNeedAdminInvite
 	}
-	if group.EnterFlag == model.EnterFlagNeedReview {
-		_, err = l.appCtx.GroupMemberApplyModel().InsertApply(group.Id, req.ToUId, &req.UId, nil, req.Channel, model.ApplyStatusInit, req.Content)
+	if group.EnterFlag == model.EnterFlagNeedReview || group.EnterFlag == model.EnterFlagNoReview {
+		_, err = l.appCtx.GroupMemberApplyModel().InsertApply(group.Id, req.UId, nil, req.Channel, model.ApplyStatusInit, req.InviteUIds, req.Content, model.TypeInvite)
 		if err != nil {
 			return err
 		}
-		// TODO 给群管理员发审核消息
-	} else if group.EnterFlag == model.EnterFlagNoReview {
-		_, err = l.appCtx.GroupMemberApplyModel().InsertApply(group.Id, req.ToUId, &req.UId, nil, req.Channel, model.ApplyStatusPassed, req.Content)
-		if err != nil {
-			return err
-		}
-		// 无需要审核，直接加入群
-		addSessionReq := &msgDto.SessionAddUserReq{
-			EntityId: group.Id,
-			UIds:     []int64{req.ToUId},
-			Role:     msgModel.SessionMember,
-		}
-		err = l.appCtx.MsgApi().AddSessionUser(group.SessionId, addSessionReq)
-		if err != nil {
-			return err
+		if group.EnterFlag == model.EnterFlagNeedReview {
+			// TODO 给管理员发送审核消息
+		} else {
+			// 无需要审核，直接加入群
+			addSessionReq := &msgDto.SessionAddUserReq{
+				EntityId: group.Id,
+				UIds:     uIds,
+				Role:     msgModel.SessionMember,
+			}
+			err = l.appCtx.MsgApi().AddSessionUser(group.SessionId, addSessionReq)
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		// 进群flag值错误

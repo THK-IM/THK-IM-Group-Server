@@ -1,11 +1,11 @@
 package dto
 
 type InviteJoinGroupReq struct {
-	UId     int64  `json:"u_id"` // 邀请人id
-	GroupId int64  `json:"group_id"`
-	ToUId   int64  `json:"to_u_id"` // 被邀请人id
-	Channel int    `json:"channel"`
-	Content string `json:"content"`
+	UId        int64  `json:"u_id"` // 邀请人id
+	GroupId    int64  `json:"group_id"`
+	InviteUIds string `json:"invite_u_ids"` // 被邀请人id, 多个用户id#号隔开
+	Channel    int    `json:"channel"`
+	Content    string `json:"content"`
 }
 
 type CancelInviteJoinGroupReq struct {
