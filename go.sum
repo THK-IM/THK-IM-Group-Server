@@ -282,8 +282,8 @@ github.com/stretchr/testify v1.8.3 h1:RP3t2pwF7cMEbC1dqtB6poj3niw/9gnV4Cjg5oW5gt
 github.com/stretchr/testify v1.8.3/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/thk-im/thk-im-base-server v0.0.0-20231217105607-d3f422122c51 h1:GneZoSipjFAyrIqUxqGKuudGTfp+CrRvjDJHhShNEd0=
 github.com/thk-im/thk-im-base-server v0.0.0-20231217105607-d3f422122c51/go.mod h1:JMsg37P+N3Z8dKhRxySFQzqM0wuNKF68vPU+fvj/Y2E=
-github.com/thk-im/thk-im-msgapi-server v0.0.0-20231218141849-fec1b89a014e h1:VUj01B2yjtm2fEO6Dt8uk2VrGH6Auz20c4do+C8qsCI=
-github.com/thk-im/thk-im-msgapi-server v0.0.0-20231218141849-fec1b89a014e/go.mod h1:t94uik1N+2yTmHkrDpvfkPAz8fJbIROGrbWlUFmFo/4=
+github.com/thk-im/thk-im-msgapi-server v0.0.0-20231221132314-b9eeaaec4cfc h1:wtCLj8B8v5ytu+9q6I5whf9wBeYpNhxJ5Sv5bQDw2Mo=
+github.com/thk-im/thk-im-msgapi-server v0.0.0-20231221132314-b9eeaaec4cfc/go.mod h1:t94uik1N+2yTmHkrDpvfkPAz8fJbIROGrbWlUFmFo/4=
 github.com/thk-im/thk-im-user-server v0.0.0-20231217105844-ee336bd19d47 h1:pRaVDSGF/g4j+qKRnGlZ0lHKP8Y9IOLdJ/YkFc80gjs=
 github.com/thk-im/thk-im-user-server v0.0.0-20231217105844-ee336bd19d47/go.mod h1:x5z5CMgM2kwe3EBnUYhdV4gaOsF94rIs//vFedyXCo8=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=

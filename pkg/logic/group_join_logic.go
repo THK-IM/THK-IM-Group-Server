@@ -32,8 +32,16 @@ func (l *GroupApplyLogic) CreateJoinGroupApply(req *dto.JoinGroupApplyReq) error
 	if group.EnterFlag == model.EnterFlagAdminInvite {
 		return errorx.ErrGroupJoinNeedAdminInvite
 	}
-	_, err = l.appCtx.GroupMemberApplyModel().InsertApply(group.Id, req.UId, nil, req.Channel, model.ApplyStatusInit, fmt.Sprintf("%d", req.UId), req.Content, model.TypeApply)
-	return err
+	apply, errApply := l.appCtx.GroupMemberApplyModel().InsertApply(group.Id, req.UId, nil, req.Channel, model.ApplyStatusInit, fmt.Sprintf("%d", req.UId), req.Content, model.TypeApply)
+
+	if errApply == nil {
+		errSend := SendGroupApplyJoinMessage(l.appCtx, apply, group.SessionId)
+		if errSend != nil {
+			l.appCtx.Logger().Errorf("SendGroupApplyJoinMessage: %v %v", apply, errSend)
+		}
+	}
+
+	return errApply
 }
 
 func (l *GroupApplyLogic) ReviewJoinGroupApply(req *dto.ReviewJoinGroupReq) error {
@@ -76,7 +84,16 @@ func (l *GroupApplyLogic) ReviewJoinGroupApply(req *dto.ReviewJoinGroupReq) erro
 		}
 	}
 	err = l.appCtx.GroupMemberApplyModel().ReviewApply(apply.Id, apply.GroupId, req.Status)
-
+	if err == nil {
+		if req.Status == model.ApplyStatusPassed {
+			errSend := SendGroupJoinedMessage(l.appCtx, apply, group.SessionId)
+			if errSend != nil {
+				l.appCtx.Logger().Errorf("SendGroupJoinedMessage: %v %v", apply, errSend)
+			}
+		} else {
+			// TODO 审核不通过结果告知申请用户
+		}
+	}
 	return err
 }
 
@@ -100,28 +117,37 @@ func (l *GroupApplyLogic) InviteJoinGroup(req *dto.InviteJoinGroupReq) error {
 	if group.EnterFlag == model.EnterFlagAdminInvite {
 		return errorx.ErrGroupJoinNeedAdminInvite
 	}
-	if group.EnterFlag == model.EnterFlagNeedReview || group.EnterFlag == model.EnterFlagNoReview {
-		_, err = l.appCtx.GroupMemberApplyModel().InsertApply(group.Id, req.UId, nil, req.Channel, model.ApplyStatusInit, req.InviteUIds, req.Content, model.TypeInvite)
-		if err != nil {
-			return err
-		}
-		if group.EnterFlag == model.EnterFlagNeedReview {
-			// TODO 给管理员发送审核消息
-		} else {
-			// 无需要审核，直接加入群
-			addSessionReq := &msgDto.SessionAddUserReq{
-				EntityId: group.Id,
-				UIds:     uIds,
-				Role:     msgModel.SessionMember,
-			}
-			err = l.appCtx.MsgApi().AddSessionUser(group.SessionId, addSessionReq)
-			if err != nil {
-				return err
+	if group.EnterFlag != model.EnterFlagNeedReview && group.EnterFlag != model.EnterFlagNoReview {
+		// 进群flag值错误
+		return baseErrorx.ErrInternalServerError
+	}
+
+	apply, errApply := l.appCtx.GroupMemberApplyModel().InsertApply(group.Id, req.UId, nil, req.Channel, model.ApplyStatusInit, req.InviteUIds, req.Content, model.TypeInvite)
+	if errApply != nil {
+		return errApply
+	}
+	if group.EnterFlag == model.EnterFlagNeedReview {
+		if errApply == nil {
+			errSend := SendGroupApplyJoinMessage(l.appCtx, apply, group.SessionId)
+			if errSend != nil {
+				l.appCtx.Logger().Errorf("SendGroupApplyJoinMessage: %v %v", apply, errSend)
 			}
 		}
 	} else {
-		// 进群flag值错误
-		return baseErrorx.ErrInternalServerError
+		// 无需要审核，直接加入群
+		addSessionReq := &msgDto.SessionAddUserReq{
+			EntityId: group.Id,
+			UIds:     uIds,
+			Role:     msgModel.SessionMember,
+		}
+		err = l.appCtx.MsgApi().AddSessionUser(group.SessionId, addSessionReq)
+		if err != nil {
+			return err
+		}
+		errSend := SendGroupJoinedMessage(l.appCtx, apply, group.SessionId)
+		if errSend != nil {
+			l.appCtx.Logger().Error("SendGroupJoinedMessage: %v %v", apply, err)
+		}
 	}
 	return nil
 }

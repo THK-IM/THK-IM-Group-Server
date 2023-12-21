@@ -7,7 +7,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/thk-im/thk-im-base-server v0.0.0-20231217105607-d3f422122c51
-	github.com/thk-im/thk-im-msgapi-server v0.0.0-20231218141849-fec1b89a014e
+	github.com/thk-im/thk-im-msgapi-server v0.0.0-20231221132314-b9eeaaec4cfc
 	github.com/thk-im/thk-im-user-server v0.0.0-20231217105844-ee336bd19d47
 	gorm.io/gorm v1.25.5
 )
