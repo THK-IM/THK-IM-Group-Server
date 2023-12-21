@@ -25,7 +25,7 @@ func SendGroupApplyJoinMessage(appCtx *app.Context, apply *model.GroupMemberAppl
 	if sessionUsersResp == nil || len(sessionUsersResp.Data) == 0 {
 		return errorx.ErrGroupNoAdminOrOwner
 	}
-	body, errBody := dto.NewGroupJoinMsgBody(apply.UIds, apply.Type, apply.ApplyUserId).ToJson()
+	body, errBody := dto.NewGroupApplyJoinMsgBody(apply.UIds, apply.Type, apply.ApplyUserId).ToJson()
 	if errBody != nil {
 		return errBody
 	}
