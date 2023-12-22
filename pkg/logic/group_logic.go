@@ -2,7 +2,10 @@ package logic
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"github.com/skip2/go-qrcode"
+	baseDto "github.com/thk-im/thk-im-base-server/dto"
+	baseErrorx "github.com/thk-im/thk-im-base-server/errorx"
 	"github.com/thk-im/thk-im-group-server/pkg/app"
 	"github.com/thk-im/thk-im-group-server/pkg/dto"
 	"github.com/thk-im/thk-im-group-server/pkg/errorx"
@@ -22,7 +25,7 @@ func NewGroupLogic(appCtx *app.Context) *GroupLogic {
 	return &GroupLogic{appCtx: appCtx}
 }
 
-func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq) (*dto.CreateGroupRes, error) {
+func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq, claims baseDto.ThkClaims) (*dto.CreateGroupRes, error) {
 	groupId := l.appCtx.GroupModel().NewGroupId()
 	displayId := strconv.FormatInt(groupId, 36)
 	memberCount := len(req.Members) + 1
@@ -38,7 +41,7 @@ func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq) (*dto.CreateGroupRes, e
 		qrCodeKey := fmt.Sprintf("group/avatar/%d/%s", groupId, qrFileName)
 		qrcodeUrl, errQrcode = l.appCtx.ObjectStorage().UploadObject(qrCodeKey, qrFilePath)
 		if errQrcode != nil {
-			l.appCtx.Logger().Error("upload object file error: ", errQrcode)
+			l.appCtx.Logger().WithFields(logrus.Fields(claims)).WithFields(logrus.Fields(claims)).Error("upload object file error: ", errQrcode)
 		}
 	}
 	if qrcodeUrl == nil {
@@ -61,7 +64,7 @@ func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq) (*dto.CreateGroupRes, e
 		Name:     req.GroupName,
 		Remark:   "",
 	}
-	createSessionResp, createErr := l.appCtx.MsgApi().CreateSession(createSessionReq)
+	createSessionResp, createErr := l.appCtx.MsgApi().CreateSession(createSessionReq, claims)
 	if createErr != nil {
 		return nil, createErr
 	}
@@ -76,7 +79,30 @@ func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq) (*dto.CreateGroupRes, e
 	return createGroupRes, nil
 }
 
-func (l *GroupLogic) UpdateGroup(req *dto.UpdateGroupReq) (*dto.UpdateGroupRes, error) {
+func (l *GroupLogic) QueryGroup(req *dto.QueryGroupReq) (*dto.QueryGroupRes, error) {
+	if req.GroupId != nil {
+		group, err := l.appCtx.GroupModel().FindGroup(*req.GroupId)
+		if err != nil {
+			return nil, err
+		}
+		if group.Id == 0 {
+			return nil, baseErrorx.ErrParamsError
+		}
+		return &dto.QueryGroupRes{Group: l.groupModel2Dto(group)}, nil
+	} else if req.DisplayId != nil {
+		group, err := l.appCtx.GroupModel().FindGroupByDisplayId(*req.DisplayId)
+		if err != nil {
+			return nil, err
+		}
+		if group.Id == 0 {
+			return nil, baseErrorx.ErrParamsError
+		}
+		return &dto.QueryGroupRes{Group: l.groupModel2Dto(group)}, nil
+	}
+	return nil, baseErrorx.ErrParamsError
+}
+
+func (l *GroupLogic) UpdateGroup(req *dto.UpdateGroupReq, claims baseDto.ThkClaims) (*dto.UpdateGroupRes, error) {
 	group, err := l.appCtx.GroupModel().FindGroup(req.GroupId)
 	if err != nil {
 		return nil, err
@@ -84,7 +110,7 @@ func (l *GroupLogic) UpdateGroup(req *dto.UpdateGroupReq) (*dto.UpdateGroupRes, 
 	if group == nil || group.Id == 0 {
 		return nil, errorx.ErrGroupNotExisted
 	}
-	sessionUser, errSu := l.appCtx.MsgApi().QuerySessionUser(group.SessionId, req.UId)
+	sessionUser, errSu := l.appCtx.MsgApi().QuerySessionUser(group.SessionId, req.UId, claims)
 	if errSu != nil {
 		return nil, errSu
 	}
@@ -116,7 +142,7 @@ func (l *GroupLogic) UpdateGroup(req *dto.UpdateGroupReq) (*dto.UpdateGroupRes, 
 	return res, nil
 }
 
-func (l *GroupLogic) JoinGroup(req *dto.JoinGroupReq) (*dto.JoinGroupRes, error) {
+func (l *GroupLogic) JoinGroup(req *dto.JoinGroupReq, claims baseDto.ThkClaims) (*dto.JoinGroupRes, error) {
 	group, err := l.appCtx.GroupModel().FindGroup(req.GroupId)
 	if err != nil {
 		return nil, err
@@ -140,16 +166,16 @@ func (l *GroupLogic) JoinGroup(req *dto.JoinGroupReq) (*dto.JoinGroupRes, error)
 	if errApply != nil {
 		return nil, errApply
 	}
-	err = l.appCtx.MsgApi().AddSessionUser(group.SessionId, addSessionReq)
+	err = l.appCtx.MsgApi().SysAddSessionUser(group.SessionId, addSessionReq, claims)
 	if err != nil {
 		return nil, err
 	}
 	_ = l.appCtx.GroupModel().AddGroupMember(group.Id, 1)
 	group.MemberCount += 1
 
-	errSend := SendGroupJoinedMessage(l.appCtx, apply, group.SessionId)
+	errSend := SendGroupJoinedMessage(l.appCtx, apply, group.SessionId, claims)
 	if errSend != nil {
-		l.appCtx.Logger().Error("SendGroupJoinedMessage: %v %v", apply, err)
+		l.appCtx.Logger().WithFields(logrus.Fields(claims)).Error("SendGroupJoinedMessage: %v %v", apply, err)
 	}
 
 	joinGroupRes := &dto.JoinGroupRes{
@@ -158,7 +184,7 @@ func (l *GroupLogic) JoinGroup(req *dto.JoinGroupReq) (*dto.JoinGroupRes, error)
 	return joinGroupRes, nil
 }
 
-func (l *GroupLogic) DeleteGroup(req *dto.DeleteGroupReq) error {
+func (l *GroupLogic) DeleteGroup(req *dto.DeleteGroupReq, claims baseDto.ThkClaims) error {
 	group, err := l.appCtx.GroupModel().FindGroup(req.GroupId)
 	if err != nil {
 		return err
@@ -166,7 +192,7 @@ func (l *GroupLogic) DeleteGroup(req *dto.DeleteGroupReq) error {
 	if group == nil || group.Id == 0 {
 		return errorx.ErrGroupNotExisted
 	}
-	sessionUser, errSu := l.appCtx.MsgApi().QuerySessionUser(group.SessionId, req.UId)
+	sessionUser, errSu := l.appCtx.MsgApi().QuerySessionUser(group.SessionId, req.UId, claims)
 	if errSu != nil {
 		return errSu
 	}
@@ -178,13 +204,13 @@ func (l *GroupLogic) DeleteGroup(req *dto.DeleteGroupReq) error {
 		delReq := &msgDto.DelSessionReq{
 			Id: group.SessionId,
 		}
-		errDel := l.appCtx.MsgApi().DelSession(group.SessionId, delReq)
+		errDel := l.appCtx.MsgApi().DelSession(group.SessionId, delReq, claims)
 		if errDel != nil {
 			return errDel
 		}
-		errSend := SendGroupDisbandMessage(l.appCtx, req.UId, group.SessionId)
+		errSend := SendGroupDisbandMessage(l.appCtx, req.UId, group.SessionId, claims)
 		if errSend != nil {
-			l.appCtx.Logger().Error("SendGroupDisbandMessage: %v %v", req.UId, err)
+			l.appCtx.Logger().WithFields(logrus.Fields(claims)).Error("SendGroupDisbandMessage: %v %v", req.UId, err)
 		}
 		return l.appCtx.GroupModel().DelGroup(group.Id)
 	} else {
@@ -192,20 +218,20 @@ func (l *GroupLogic) DeleteGroup(req *dto.DeleteGroupReq) error {
 		delReq := &msgDto.SessionDelUserReq{
 			UIds: []int64{req.UId},
 		}
-		errDel := l.appCtx.MsgApi().DelSessionUser(group.SessionId, delReq)
+		errDel := l.appCtx.MsgApi().SysDelSessionUser(group.SessionId, delReq, claims)
 		if errDel != nil {
 			return errDel
 		}
 		uIds := fmt.Sprintf("%d", req.UId)
-		errSend := SendGroupQuitMessage(l.appCtx, uIds, dto.QuitTypeLeave, req.UId, group.SessionId)
+		errSend := SendGroupQuitMessage(l.appCtx, uIds, dto.QuitTypeLeave, req.UId, group.SessionId, claims)
 		if errSend != nil {
-			l.appCtx.Logger().Error("SendGroupDisbandMessage: %v %v", req.UId, err)
+			l.appCtx.Logger().WithFields(logrus.Fields(claims)).Error("SendGroupDisbandMessage: %v %v", req.UId, err)
 		}
 		return l.appCtx.GroupModel().AddGroupMember(group.Id, -1)
 	}
 }
 
-func (l *GroupLogic) TransferGroup(req *dto.TransferGroupReq) error {
+func (l *GroupLogic) TransferGroup(req *dto.TransferGroupReq, claims baseDto.ThkClaims) error {
 	group, err := l.appCtx.GroupModel().FindGroup(req.GroupId)
 	if err != nil {
 		return err
@@ -218,9 +244,9 @@ func (l *GroupLogic) TransferGroup(req *dto.TransferGroupReq) error {
 	}
 	err = l.appCtx.GroupModel().UpdateGroupOwner(req.GroupId, req.ToUId)
 	if err != nil {
-		errSend := SendGroupTransferMessage(l.appCtx, req.UId, req.ToUId, group.SessionId)
+		errSend := SendGroupTransferMessage(l.appCtx, req.UId, req.ToUId, group.SessionId, claims)
 		if errSend != nil {
-			l.appCtx.Logger().Error("SendGroupTransferMessage: %v %v", req.UId, err)
+			l.appCtx.Logger().WithFields(logrus.Fields(claims)).Error("SendGroupTransferMessage: %v %v", req.UId, err)
 		}
 	}
 	return err

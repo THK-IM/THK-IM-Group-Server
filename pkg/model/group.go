@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"github.com/sirupsen/logrus"
+	baseErrorx "github.com/thk-im/thk-im-base-server/errorx"
 	"github.com/thk-im/thk-im-base-server/snowflake"
 	"gorm.io/gorm"
 	"hash/crc32"
@@ -44,6 +45,7 @@ type (
 		AddGroupMember(groupId int64, count int) error
 		NewGroupId() int64
 		FindGroup(groupId int64) (*Group, error)
+		FindGroupByDisplayId(displayId string) (*Group, error)
 		ResetGroupSessionId(id, sessionId int64) error
 		CreateGroup(id, sessionId, ownerId int64, displayId, name, avatar, announce, qrcode string, extData *string, memberCount, enterFlag int) (*Group, error)
 		UpdateGroup(groupId int64, name, avatar, announce, qrcode, extData *string, enterFlag *int) error
@@ -79,6 +81,24 @@ func (d defaultGroupModel) FindGroup(groupId int64) (*Group, error) {
 	sql := fmt.Sprintf("select * from %s where id = ? and deleted = 0", tableName)
 	group := &Group{}
 	err := d.db.Raw(sql, groupId).Scan(group).Error
+	return group, err
+}
+
+func (d defaultGroupModel) FindGroupByDisplayId(displayId string) (*Group, error) {
+	displayTableName := d.genGroupDisplayIdTableName(displayId)
+	sql := fmt.Sprintf("select * from %s where display_id = ? ", displayTableName)
+	groupDisplayId := &GroupDisplayId{}
+	err := d.db.Raw(sql, displayId).Scan(groupDisplayId).Error
+	if err != nil {
+		return nil, err
+	}
+	if groupDisplayId.Id == 0 {
+		return nil, baseErrorx.ErrParamsError
+	}
+	tableName := d.genGroupTableName(groupDisplayId.Id)
+	sql = fmt.Sprintf("select * from %s where id = ? and deleted = 0", tableName)
+	group := &Group{}
+	err = d.db.Raw(sql, groupDisplayId.Id).Scan(group).Error
 	return group, err
 }
 

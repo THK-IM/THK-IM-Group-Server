@@ -2,31 +2,42 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	baseDto "github.com/thk-im/thk-im-base-server/dto"
+	baseMiddleware "github.com/thk-im/thk-im-base-server/middleware"
 	"github.com/thk-im/thk-im-group-server/pkg/app"
 	"github.com/thk-im/thk-im-group-server/pkg/dto"
 	"github.com/thk-im/thk-im-group-server/pkg/logic"
+	userSdk "github.com/thk-im/thk-im-user-server/pkg/sdk"
 	"strconv"
 )
 
 // curl -i -X POST -d '{"user_id": 1, "members": [5, 6], "group_name": "1-group", "group_announce": "12143242423", "group_type": 2}' "http://192.168.1.9:16000/group"
 func createGroup(appCtx *app.Context) gin.HandlerFunc {
 	groupLogic := logic.NewGroupLogic(appCtx)
-	return func(context *gin.Context) {
+	return func(ctx *gin.Context) {
+		claims := ctx.MustGet(baseMiddleware.ClaimsKey).(baseDto.ThkClaims)
 		req := &dto.CreateGroupReq{}
-		err := context.BindJSON(req)
+		err := ctx.BindJSON(req)
 		if err != nil {
-			appCtx.Logger().Errorf("createGroup %v", err)
-			baseDto.ResponseBadRequest(context)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("createGroup %v", err)
+			baseDto.ResponseBadRequest(ctx)
 		}
 
-		resp, errCreate := groupLogic.CreatGroup(req)
+		requestUid := ctx.GetInt64(userSdk.UidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("createGroup %d, %d", requestUid, req.UId)
+			baseDto.ResponseForbidden(ctx)
+			return
+		}
+
+		resp, errCreate := groupLogic.CreatGroup(req, claims)
 		if errCreate != nil {
-			appCtx.Logger().Errorf("createGroup %v %v", req, errCreate)
-			baseDto.ResponseInternalServerError(context, errCreate)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("createGroup %v %v", req, errCreate)
+			baseDto.ResponseInternalServerError(ctx, errCreate)
 		} else {
-			appCtx.Logger().Infof("createGroup %v %v", req, resp)
-			baseDto.ResponseSuccess(context, resp)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Infof("createGroup %v %v", req, resp)
+			baseDto.ResponseSuccess(ctx, resp)
 		}
 	}
 }
@@ -34,97 +45,160 @@ func createGroup(appCtx *app.Context) gin.HandlerFunc {
 // curl -i -X POST -d '{"user_id": 90}' "http://192.168.1.9:16000/group/1736282436255359732/join"
 func joinGroup(appCtx *app.Context) gin.HandlerFunc {
 	groupLogic := logic.NewGroupLogic(appCtx)
-	return func(context *gin.Context) {
-		groupId, errGroupId := strconv.ParseInt(context.Param("id"), 10, 64)
+	return func(ctx *gin.Context) {
+		claims := ctx.MustGet(baseMiddleware.ClaimsKey).(baseDto.ThkClaims)
+		groupId, errGroupId := strconv.ParseInt(ctx.Param("id"), 10, 64)
 		if errGroupId != nil {
-			appCtx.Logger().Errorf("joinGroup %v", errGroupId)
-			baseDto.ResponseBadRequest(context)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("joinGroup %v", errGroupId)
+			baseDto.ResponseBadRequest(ctx)
 			return
 		}
 		req := &dto.JoinGroupReq{}
-		err := context.BindJSON(req)
+		err := ctx.BindJSON(req)
 		if err != nil {
-			appCtx.Logger().Errorf("joinGroup %v", err)
-			baseDto.ResponseBadRequest(context)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("joinGroup %v", err)
+			baseDto.ResponseBadRequest(ctx)
 		}
 		req.GroupId = groupId
 
-		resp, errJoin := groupLogic.JoinGroup(req)
+		requestUid := ctx.GetInt64(userSdk.UidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("joinGroup %d, %d", requestUid, req.UId)
+			baseDto.ResponseForbidden(ctx)
+			return
+		}
+
+		resp, errJoin := groupLogic.JoinGroup(req, claims)
 		if errJoin != nil {
-			appCtx.Logger().Errorf("joinGroup %v %v", req, errJoin)
-			baseDto.ResponseInternalServerError(context, errJoin)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("joinGroup %v %v", req, errJoin)
+			baseDto.ResponseInternalServerError(ctx, errJoin)
 		} else {
-			appCtx.Logger().Infof("joinGroup %v %v", req, resp)
-			baseDto.ResponseSuccess(context, resp)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Infof("joinGroup %v %v", req, resp)
+			baseDto.ResponseSuccess(ctx, resp)
 		}
 	}
 }
 
 func deleteGroup(appCtx *app.Context) gin.HandlerFunc {
 	groupLogic := logic.NewGroupLogic(appCtx)
-	return func(context *gin.Context) {
+	return func(ctx *gin.Context) {
+		claims := ctx.MustGet(baseMiddleware.ClaimsKey).(baseDto.ThkClaims)
 		req := &dto.DeleteGroupReq{}
-		err := context.BindJSON(req)
+		err := ctx.BindJSON(req)
 		if err != nil {
-			appCtx.Logger().Errorf("deleteGroup %v", err)
-			baseDto.ResponseBadRequest(context)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("deleteGroup %v", err)
+			baseDto.ResponseBadRequest(ctx)
 		}
 
-		errDelete := groupLogic.DeleteGroup(req)
+		requestUid := ctx.GetInt64(userSdk.UidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("deleteGroup %d, %d", requestUid, req.UId)
+			baseDto.ResponseForbidden(ctx)
+			return
+		}
+
+		errDelete := groupLogic.DeleteGroup(req, claims)
 		if errDelete != nil {
-			appCtx.Logger().Errorf("deleteGroup %v %v", req, errDelete)
-			baseDto.ResponseInternalServerError(context, errDelete)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("deleteGroup %v %v", req, errDelete)
+			baseDto.ResponseInternalServerError(ctx, errDelete)
 		} else {
-			appCtx.Logger().Infof("deleteGroup %v", req)
-			baseDto.ResponseSuccess(context, nil)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Infof("deleteGroup %v", req)
+			baseDto.ResponseSuccess(ctx, nil)
 		}
 	}
 }
 
 func queryGroup(appCtx *app.Context) gin.HandlerFunc {
-	//groupLogic := logic.NewGroupLogic(appCtx)
-	return func(context *gin.Context) {
+	groupLogic := logic.NewGroupLogic(appCtx)
+	return func(ctx *gin.Context) {
+		claims := ctx.MustGet(baseMiddleware.ClaimsKey).(baseDto.ThkClaims)
+		req := &dto.QueryGroupReq{}
+		displayId := ctx.Param("id")
+		strId := ctx.Query("id")
+		if displayId != "" {
+			req.DisplayId = &displayId
+		}
+		if strId != "" {
+			id, errId := strconv.ParseInt(strId, 10, 64)
+			if errId != nil {
+				appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("queryGroup %v", errId)
+				baseDto.ResponseBadRequest(ctx)
+			}
+			req.GroupId = &id
+		}
+
+		requestUid := ctx.GetInt64(userSdk.UidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("queryGroup %d, %d", requestUid, req.UId)
+			baseDto.ResponseForbidden(ctx)
+			return
+		}
+
+		resp, errQuery := groupLogic.QueryGroup(req)
+		if errQuery != nil {
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("queryGroup %v %v", req, errQuery)
+			baseDto.ResponseInternalServerError(ctx, errQuery)
+		} else {
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Infof("queryGroup %v %v", req, resp)
+			baseDto.ResponseSuccess(ctx, resp)
+		}
 	}
 }
 
 func transferGroup(appCtx *app.Context) gin.HandlerFunc {
 	groupLogic := logic.NewGroupLogic(appCtx)
-	return func(context *gin.Context) {
+	return func(ctx *gin.Context) {
+		claims := ctx.MustGet(baseMiddleware.ClaimsKey).(baseDto.ThkClaims)
 		req := &dto.TransferGroupReq{}
-		err := context.BindJSON(req)
+		err := ctx.BindJSON(req)
 		if err != nil {
-			appCtx.Logger().Errorf("transferGroup %v", err)
-			baseDto.ResponseBadRequest(context)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("transferGroup %v", err)
+			baseDto.ResponseBadRequest(ctx)
 		}
 
-		errTransfer := groupLogic.TransferGroup(req)
+		requestUid := ctx.GetInt64(userSdk.UidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("transferGroup %d, %d", requestUid, req.UId)
+			baseDto.ResponseForbidden(ctx)
+			return
+		}
+
+		errTransfer := groupLogic.TransferGroup(req, claims)
 		if errTransfer != nil {
-			appCtx.Logger().Errorf("transferGroup %v %v", req, errTransfer)
-			baseDto.ResponseInternalServerError(context, errTransfer)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("transferGroup %v %v", req, errTransfer)
+			baseDto.ResponseInternalServerError(ctx, errTransfer)
 		} else {
-			appCtx.Logger().Infof("transferGroup %v", req)
-			baseDto.ResponseSuccess(context, nil)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Infof("transferGroup %v", req)
+			baseDto.ResponseSuccess(ctx, nil)
 		}
 	}
 }
 
 func updateGroup(appCtx *app.Context) gin.HandlerFunc {
 	groupLogic := logic.NewGroupLogic(appCtx)
-	return func(context *gin.Context) {
+	return func(ctx *gin.Context) {
+		claims := ctx.MustGet(baseMiddleware.ClaimsKey).(baseDto.ThkClaims)
 		req := &dto.UpdateGroupReq{}
-		err := context.BindJSON(req)
+		err := ctx.BindJSON(req)
 		if err != nil {
-			appCtx.Logger().Errorf("updateGroup %v", err)
-			baseDto.ResponseBadRequest(context)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("updateGroup %v", err)
+			baseDto.ResponseBadRequest(ctx)
 		}
 
-		resp, errUpdate := groupLogic.UpdateGroup(req)
+		requestUid := ctx.GetInt64(userSdk.UidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("updateGroup %d, %d", requestUid, req.UId)
+			baseDto.ResponseForbidden(ctx)
+			return
+		}
+
+		resp, errUpdate := groupLogic.UpdateGroup(req, claims)
 		if errUpdate != nil {
-			appCtx.Logger().Errorf("updateGroup %v %v", req, errUpdate)
-			baseDto.ResponseInternalServerError(context, errUpdate)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("updateGroup %v %v", req, errUpdate)
+			baseDto.ResponseInternalServerError(ctx, errUpdate)
 		} else {
-			appCtx.Logger().Infof("updateGroup %v %v", req, resp)
-			baseDto.ResponseSuccess(context, resp)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Infof("updateGroup %v %v", req, resp)
+			baseDto.ResponseSuccess(ctx, resp)
 		}
 	}
 }

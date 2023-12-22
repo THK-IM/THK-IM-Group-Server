@@ -72,3 +72,13 @@ type QueryGroupListResp struct {
 	Total int64    `json:"total"`
 	Data  []*Group `json:"data"`
 }
+
+type QueryGroupReq struct {
+	UId       int64   `json:"u_id"`
+	GroupId   *int64  `json:"group_id"`
+	DisplayId *string `json:"display_id"`
+}
+
+type QueryGroupRes struct {
+	*Group
+}

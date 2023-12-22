@@ -9,9 +9,9 @@ type InviteJoinGroupReq struct {
 }
 
 type CancelInviteJoinGroupReq struct {
-	UId       int64 `json:"u_id"`
-	GroupId   int64 `json:"group_id"`
-	InviteUId int64 `json:"invite_u_id"`
+	ApplyId int64 `json:"apply_id"`
+	GroupId int64 `json:"group_id"`
+	UId     int64 `json:"u_id"`
 }
 
 type JoinGroupApplyReq struct {

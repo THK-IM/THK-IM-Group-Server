@@ -1,6 +1,7 @@
 package logic
 
 import (
+	baseDto "github.com/thk-im/thk-im-base-server/dto"
 	"github.com/thk-im/thk-im-group-server/pkg/app"
 	"github.com/thk-im/thk-im-group-server/pkg/dto"
 	"github.com/thk-im/thk-im-group-server/pkg/errorx"
@@ -10,7 +11,7 @@ import (
 	"time"
 )
 
-func SendReviewGroupJoinMessage(appCtx *app.Context, apply *model.GroupMemberApply, sessionId int64) error {
+func SendReviewGroupJoinMessage(appCtx *app.Context, apply *model.GroupMemberApply, sessionId int64, claims baseDto.ThkClaims) error {
 	role := msgModel.SessionAdmin
 	querySessionUsersReq := &msgDto.QuerySessionUsersReq{
 		SId:   sessionId,
@@ -18,7 +19,7 @@ func SendReviewGroupJoinMessage(appCtx *app.Context, apply *model.GroupMemberApp
 		MTime: 0,
 		Count: 100,
 	}
-	sessionUsersResp, errSu := appCtx.MsgApi().QuerySessionUsers(sessionId, querySessionUsersReq)
+	sessionUsersResp, errSu := appCtx.MsgApi().QuerySessionUsers(sessionId, querySessionUsersReq, claims)
 	if errSu != nil {
 		return errSu
 	}
@@ -39,11 +40,11 @@ func SendReviewGroupJoinMessage(appCtx *app.Context, apply *model.GroupMemberApp
 		Body:      body,
 		Receivers: admins,
 	}
-	_, errSend := appCtx.MsgApi().SendSysMessage(sendMsgReq)
+	_, errSend := appCtx.MsgApi().SendSysMessage(sendMsgReq, claims)
 	return errSend
 }
 
-func SendRejectGroupJoinMessage(appCtx *app.Context, apply *model.GroupMemberApply) error {
+func SendRejectGroupJoinMessage(appCtx *app.Context, apply *model.GroupMemberApply, claims baseDto.ThkClaims) error {
 	body, errBody := dto.NewRejectGroupJoinMsgBody(apply.Id, apply.GroupId, apply.UIds, apply.Type, apply.ApplyUserId).ToJson()
 	if errBody != nil {
 		return errBody
@@ -55,11 +56,11 @@ func SendRejectGroupJoinMessage(appCtx *app.Context, apply *model.GroupMemberApp
 		Body:      body,
 		Receivers: []int64{apply.ApplyUserId},
 	}
-	_, errSend := appCtx.MsgApi().SendSysMessage(sendMsgReq)
+	_, errSend := appCtx.MsgApi().SendSysMessage(sendMsgReq, claims)
 	return errSend
 }
 
-func SendGroupJoinedMessage(appCtx *app.Context, apply *model.GroupMemberApply, sessionId int64) error {
+func SendGroupJoinedMessage(appCtx *app.Context, apply *model.GroupMemberApply, sessionId int64, claims baseDto.ThkClaims) error {
 	body, errBody := dto.NewGroupJoinMsgBody(apply.UIds, apply.Type, apply.ApplyUserId).ToJson()
 	if errBody != nil {
 		return errBody
@@ -72,11 +73,11 @@ func SendGroupJoinedMessage(appCtx *app.Context, apply *model.GroupMemberApply, 
 		Body:  body,
 		FUid:  0,
 	}
-	_, errSend := appCtx.MsgApi().SendSessionMessage(sendMsgReq)
+	_, errSend := appCtx.MsgApi().SendSessionMessage(sendMsgReq, claims)
 	return errSend
 }
 
-func SendGroupQuitMessage(appCtx *app.Context, uIds string, quitType int8, oprUId, sessionId int64) error {
+func SendGroupQuitMessage(appCtx *app.Context, uIds string, quitType int8, oprUId, sessionId int64, claims baseDto.ThkClaims) error {
 	body, errBody := dto.NewGroupQuitMsgBody(uIds, quitType, oprUId).ToJson()
 	if errBody != nil {
 		return errBody
@@ -89,11 +90,11 @@ func SendGroupQuitMessage(appCtx *app.Context, uIds string, quitType int8, oprUI
 		Body:  body,
 		FUid:  0,
 	}
-	_, errSend := appCtx.MsgApi().SendSessionMessage(sendMsgReq)
+	_, errSend := appCtx.MsgApi().SendSessionMessage(sendMsgReq, claims)
 	return errSend
 }
 
-func SendGroupDisbandMessage(appCtx *app.Context, oprUId, sessionId int64) error {
+func SendGroupDisbandMessage(appCtx *app.Context, oprUId, sessionId int64, claims baseDto.ThkClaims) error {
 	body, errBody := dto.NewGroupDisbandMsgBody(oprUId).ToJson()
 	if errBody != nil {
 		return errBody
@@ -106,11 +107,11 @@ func SendGroupDisbandMessage(appCtx *app.Context, oprUId, sessionId int64) error
 		Body:  body,
 		FUid:  0,
 	}
-	_, errSend := appCtx.MsgApi().SendSessionMessage(sendMsgReq)
+	_, errSend := appCtx.MsgApi().SendSessionMessage(sendMsgReq, claims)
 	return errSend
 }
 
-func SendGroupTransferMessage(appCtx *app.Context, oldOwnerId, newOwnerId, sessionId int64) error {
+func SendGroupTransferMessage(appCtx *app.Context, oldOwnerId, newOwnerId, sessionId int64, claims baseDto.ThkClaims) error {
 	body, errBody := dto.NewGroupTransferMsgBody(oldOwnerId, newOwnerId).ToJson()
 	if errBody != nil {
 		return errBody
@@ -123,6 +124,6 @@ func SendGroupTransferMessage(appCtx *app.Context, oldOwnerId, newOwnerId, sessi
 		Body:  body,
 		FUid:  0,
 	}
-	_, errSend := appCtx.MsgApi().SendSessionMessage(sendMsgReq)
+	_, errSend := appCtx.MsgApi().SendSessionMessage(sendMsgReq, claims)
 	return errSend
 }
