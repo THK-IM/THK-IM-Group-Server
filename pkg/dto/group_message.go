@@ -3,13 +3,13 @@ package dto
 import "encoding/json"
 
 const (
-	SysMsgTypeReviewJoinGroup = -3001 // 审核进群消息
-	SysMsgTypeRejectJoinGroup = -3002 // 拒绝通过群加入申请消息
+	SysMsgTypeReviewJoinGroup = -30 // 审核进群消息
+	SysMsgTypeRejectJoinGroup = -31 // 拒绝通过群加入申请消息
 
-	MsgTypeJoinGroup     = 3000 // 加入群消息类型
-	MsgTypeQuitGroup     = 3001 // 退出群消息类型
-	MsgTypeDisbandGroup  = 3002 // 群解散消息类型
-	MsgTypeTransferGroup = 3003 // 转让群消息类型
+	MsgTypeJoinGroup     = 10 // 加入群消息类型
+	MsgTypeQuitGroup     = 11 // 退出群消息类型
+	MsgTypeDisbandGroup  = 12 // 群解散消息类型
+	MsgTypeTransferGroup = 13 // 转让群消息类型
 )
 
 const (
