@@ -81,12 +81,33 @@ func inviteJoinGroup(appCtx *app.Context) gin.HandlerFunc {
 			baseDto.ResponseBadRequest(context)
 		}
 
-		errInivte := applyLogic.InviteJoinGroup(req)
-		if errInivte != nil {
-			appCtx.Logger().Errorf("createJoinGroupApply %v %v", req, errInivte)
-			baseDto.ResponseInternalServerError(context, errInivte)
+		errInvite := applyLogic.InviteJoinGroup(req)
+		if errInvite != nil {
+			appCtx.Logger().Errorf("createJoinGroupApply %v %v", req, errInvite)
+			baseDto.ResponseInternalServerError(context, errInvite)
 		} else {
 			appCtx.Logger().Infof("createJoinGroupApply %v", req)
+			baseDto.ResponseSuccess(context, nil)
+		}
+	}
+}
+
+func deleteGroupMember(appCtx *app.Context) gin.HandlerFunc {
+	applyLogic := logic.NewGroupApplyLogic(appCtx)
+	return func(context *gin.Context) {
+		req := &dto.DeleteGroupMemberReq{}
+		err := context.BindJSON(req)
+		if err != nil {
+			appCtx.Logger().Errorf("deleteGroupMember %v", err)
+			baseDto.ResponseBadRequest(context)
+		}
+
+		errDelete := applyLogic.DeleteGroupMember(req)
+		if errDelete != nil {
+			appCtx.Logger().Errorf("deleteGroupMember %v %v", req, errDelete)
+			baseDto.ResponseInternalServerError(context, errDelete)
+		} else {
+			appCtx.Logger().Infof("deleteGroupMember %v", req)
 			baseDto.ResponseSuccess(context, nil)
 		}
 	}

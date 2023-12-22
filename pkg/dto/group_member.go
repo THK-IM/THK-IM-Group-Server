@@ -49,3 +49,9 @@ type QueryJoinGroupApplyListResp struct {
 	Total int               `json:"total"`
 	Data  []*JoinGroupApply `json:"data"`
 }
+
+type DeleteGroupMemberReq struct {
+	GroupId int64   `json:"group_id"`
+	UId     int64   `json:"u_id"`
+	DelUIds []int64 `json:"del_u_ids"`
+}

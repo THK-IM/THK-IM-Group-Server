@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `group_join_apply_%s`
+CREATE TABLE IF NOT EXISTS `group_member_apply_%s`
 (
     `id`             BIGINT  NOT NULL COMMENT '申请id',
     `group_id`       BIGINT  NOT NULL COMMENT '群id',

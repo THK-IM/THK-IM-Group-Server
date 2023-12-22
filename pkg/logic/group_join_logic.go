@@ -33,9 +33,8 @@ func (l *GroupApplyLogic) CreateJoinGroupApply(req *dto.JoinGroupApplyReq) error
 		return errorx.ErrGroupJoinNeedAdminInvite
 	}
 	apply, errApply := l.appCtx.GroupMemberApplyModel().InsertApply(group.Id, req.UId, nil, req.Channel, model.ApplyStatusInit, fmt.Sprintf("%d", req.UId), req.Content, model.TypeApply)
-
 	if errApply == nil {
-		errSend := SendGroupApplyJoinMessage(l.appCtx, apply, group.SessionId)
+		errSend := SendReviewGroupJoinMessage(l.appCtx, apply, group.SessionId)
 		if errSend != nil {
 			l.appCtx.Logger().Errorf("SendGroupApplyJoinMessage: %v %v", apply, errSend)
 		}
@@ -73,12 +72,12 @@ func (l *GroupApplyLogic) ReviewJoinGroupApply(req *dto.ReviewJoinGroupReq) erro
 	}
 
 	if req.Status == model.ApplyStatusPassed {
-		addSessionReq := &msgDto.SessionAddUserReq{
+		addSessionUserReq := &msgDto.SessionAddUserReq{
 			EntityId: group.Id,
 			UIds:     []int64{apply.ApplyUserId},
 			Role:     msgModel.SessionMember,
 		}
-		err = l.appCtx.MsgApi().AddSessionUser(group.SessionId, addSessionReq)
+		err = l.appCtx.MsgApi().AddSessionUser(group.SessionId, addSessionUserReq)
 		if err != nil {
 			return err
 		}
@@ -91,7 +90,10 @@ func (l *GroupApplyLogic) ReviewJoinGroupApply(req *dto.ReviewJoinGroupReq) erro
 				l.appCtx.Logger().Errorf("SendGroupJoinedMessage: %v %v", apply, errSend)
 			}
 		} else {
-			// TODO 审核不通过结果告知申请用户
+			errSend := SendRejectGroupJoinMessage(l.appCtx, apply)
+			if errSend != nil {
+				l.appCtx.Logger().Errorf("SendReviewGroupJoinMessage: %v %v", apply, errSend)
+			}
 		}
 	}
 	return err
@@ -128,7 +130,7 @@ func (l *GroupApplyLogic) InviteJoinGroup(req *dto.InviteJoinGroupReq) error {
 	}
 	if group.EnterFlag == model.EnterFlagNeedReview {
 		if errApply == nil {
-			errSend := SendGroupApplyJoinMessage(l.appCtx, apply, group.SessionId)
+			errSend := SendReviewGroupJoinMessage(l.appCtx, apply, group.SessionId)
 			if errSend != nil {
 				l.appCtx.Logger().Errorf("SendGroupApplyJoinMessage: %v %v", apply, errSend)
 			}
@@ -146,7 +148,7 @@ func (l *GroupApplyLogic) InviteJoinGroup(req *dto.InviteJoinGroupReq) error {
 		}
 		errSend := SendGroupJoinedMessage(l.appCtx, apply, group.SessionId)
 		if errSend != nil {
-			l.appCtx.Logger().Error("SendGroupJoinedMessage: %v %v", apply, err)
+			l.appCtx.Logger().Error("SendGroupJoinedMessage: %v %v", apply, errSend)
 		}
 	}
 	return nil
@@ -187,6 +189,32 @@ func (l *GroupApplyLogic) QueryJoinGroupApplyList(req *dto.QueryJoinGroupApplyLi
 
 func (l *GroupApplyLogic) CancelInviteJoinGroup(req *dto.CancelInviteJoinGroupReq) error {
 	return nil
+}
+
+func (l *GroupApplyLogic) DeleteGroupMember(req *dto.DeleteGroupMemberReq) error {
+	group, errGroup := l.appCtx.GroupModel().FindGroup(req.GroupId)
+	if errGroup != nil {
+		return errGroup
+	}
+	if group == nil || group.Id == 0 {
+		return errorx.ErrGroupNotExisted
+	}
+
+	delSessionUserReq := &msgDto.SessionDelUserReq{
+		UIds: req.DelUIds,
+	}
+	errDel := l.appCtx.MsgApi().DelSessionUser(group.SessionId, delSessionUserReq)
+	if errDel == nil {
+		strUIds := make([]string, 0)
+		for _, uId := range req.DelUIds {
+			strUIds = append(strUIds, fmt.Sprintf("%d", uId))
+		}
+		errSend := SendGroupQuitMessage(l.appCtx, strings.Join(strUIds, "#"), dto.QuitTypeBeKicked, req.UId, group.SessionId)
+		if errSend != nil {
+			l.appCtx.Logger().Error("SendGroupQuitMessage: %v ", errSend)
+		}
+	}
+	return errDel
 }
 
 func (l *GroupApplyLogic) applyModel2Dto(m *model.GroupMemberApply) *dto.JoinGroupApply {

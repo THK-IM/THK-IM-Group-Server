@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func SendGroupApplyJoinMessage(appCtx *app.Context, apply *model.GroupMemberApply, sessionId int64) error {
+func SendReviewGroupJoinMessage(appCtx *app.Context, apply *model.GroupMemberApply, sessionId int64) error {
 	role := msgModel.SessionAdmin
 	querySessionUsersReq := &msgDto.QuerySessionUsersReq{
 		SId:   sessionId,
@@ -25,7 +25,7 @@ func SendGroupApplyJoinMessage(appCtx *app.Context, apply *model.GroupMemberAppl
 	if sessionUsersResp == nil || len(sessionUsersResp.Data) == 0 {
 		return errorx.ErrGroupNoAdminOrOwner
 	}
-	body, errBody := dto.NewGroupApplyJoinMsgBody(apply.UIds, apply.Type, apply.ApplyUserId).ToJson()
+	body, errBody := dto.NewReviewGroupJoinMsgBody(apply.Id, apply.GroupId, apply.UIds, apply.Type, apply.ApplyUserId).ToJson()
 	if errBody != nil {
 		return errBody
 	}
@@ -34,10 +34,26 @@ func SendGroupApplyJoinMessage(appCtx *app.Context, apply *model.GroupMemberAppl
 		admins = append(admins, su.UId)
 	}
 	sendMsgReq := &msgDto.SendSysMessageReq{
-		Type:      dto.SysMsgTypeApplyJoinGroup,
+		Type:      dto.SysMsgTypeReviewJoinGroup,
 		CTime:     time.Now().UnixMilli(),
 		Body:      body,
 		Receivers: admins,
+	}
+	_, errSend := appCtx.MsgApi().SendSysMessage(sendMsgReq)
+	return errSend
+}
+
+func SendRejectGroupJoinMessage(appCtx *app.Context, apply *model.GroupMemberApply) error {
+	body, errBody := dto.NewRejectGroupJoinMsgBody(apply.Id, apply.GroupId, apply.UIds, apply.Type, apply.ApplyUserId).ToJson()
+	if errBody != nil {
+		return errBody
+	}
+
+	sendMsgReq := &msgDto.SendSysMessageReq{
+		Type:      dto.SysMsgTypeRejectJoinGroup,
+		CTime:     time.Now().UnixMilli(),
+		Body:      body,
+		Receivers: []int64{apply.ApplyUserId},
 	}
 	_, errSend := appCtx.MsgApi().SendSysMessage(sendMsgReq)
 	return errSend
@@ -86,6 +102,23 @@ func SendGroupDisbandMessage(appCtx *app.Context, oprUId, sessionId int64) error
 		CId:   appCtx.SnowflakeNode().Generate().Int64(),
 		SId:   sessionId,
 		Type:  dto.MsgTypeDisbandGroup,
+		CTime: time.Now().UnixMilli(),
+		Body:  body,
+		FUid:  0,
+	}
+	_, errSend := appCtx.MsgApi().SendSessionMessage(sendMsgReq)
+	return errSend
+}
+
+func SendGroupTransferMessage(appCtx *app.Context, oldOwnerId, newOwnerId, sessionId int64) error {
+	body, errBody := dto.NewGroupTransferMsgBody(oldOwnerId, newOwnerId).ToJson()
+	if errBody != nil {
+		return errBody
+	}
+	sendMsgReq := &msgDto.SendMessageReq{
+		CId:   appCtx.SnowflakeNode().Generate().Int64(),
+		SId:   sessionId,
+		Type:  dto.MsgTypeTransferGroup,
 		CTime: time.Now().UnixMilli(),
 		Body:  body,
 		FUid:  0,

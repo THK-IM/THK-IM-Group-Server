@@ -216,7 +216,14 @@ func (l *GroupLogic) TransferGroup(req *dto.TransferGroupReq) error {
 	if group.OwnerId != req.UId {
 		return errorx.ErrGroupPermission
 	}
-	return l.appCtx.GroupModel().UpdateGroupOwner(req.GroupId, req.ToUId)
+	err = l.appCtx.GroupModel().UpdateGroupOwner(req.GroupId, req.ToUId)
+	if err != nil {
+		errSend := SendGroupTransferMessage(l.appCtx, req.UId, req.ToUId, group.SessionId)
+		if errSend != nil {
+			l.appCtx.Logger().Error("SendGroupTransferMessage: %v %v", req.UId, err)
+		}
+	}
+	return err
 }
 
 func (l *GroupLogic) groupModel2Dto(group *model.Group) *dto.Group {
