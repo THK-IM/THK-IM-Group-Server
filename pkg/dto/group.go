@@ -12,6 +12,8 @@ type Group struct {
 	Announce    string  `json:"announce"`
 	ExtData     *string `json:"ext_data"`
 	EnterFlag   int     `json:"enter_flag"`
+	CreateTime  int64   `json:"create_time"`
+	UpdateTime  int64   `json:"update_time"`
 }
 
 type CreateGroupReq struct {
@@ -62,13 +64,13 @@ type TransferGroupReq struct {
 	GroupId int64 `json:"group_id"`
 }
 
-type QueryGroupListReq struct {
+type QueryLatestGroupReq struct {
 	UId    int64 `json:"u_id"`
 	Count  int   `json:"count" form:"count"`
 	Offset int   `json:"offset" form:"offset"`
 }
 
-type QueryGroupListResp struct {
+type QueryLatestGroupRes struct {
 	Total int64    `json:"total"`
 	Data  []*Group `json:"data"`
 }

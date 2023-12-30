@@ -265,5 +265,7 @@ func (l *GroupLogic) groupModel2Dto(group *model.Group) *dto.Group {
 		Announce:    group.Announce,
 		ExtData:     group.ExtData,
 		EnterFlag:   group.EnterFlag,
+		CreateTime:  group.CreateTime,
+		UpdateTime:  group.UpdateTime,
 	}
 }
