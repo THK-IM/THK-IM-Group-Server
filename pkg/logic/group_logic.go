@@ -12,9 +12,9 @@ import (
 	"github.com/thk-im/thk-im-group-server/pkg/model"
 	msgDto "github.com/thk-im/thk-im-msgapi-server/pkg/dto"
 	msgModel "github.com/thk-im/thk-im-msgapi-server/pkg/model"
+	userDto "github.com/thk-im/thk-im-user-server/pkg/dto"
 	"image/color"
 	"strconv"
-	"time"
 )
 
 type GroupLogic struct {
@@ -31,14 +31,14 @@ func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq, claims baseDto.ThkClaim
 	memberCount := len(req.Members) + 1
 
 	var qrcodeUrl *string = nil
-	qrFileName := fmt.Sprintf("%s-%d-qrcode.png", req.GroupName, time.Now().UnixMilli()/1000)
+	qrFileName := fmt.Sprintf("%d-qrcode.png", groupId)
 	qrFilePath := fmt.Sprintf("tmp/%s", qrFileName)
 	url := fmt.Sprintf("https://api.thkim.com/group/%s", displayId)
 	errQrcode := qrcode.WriteColorFile(url, qrcode.Medium, 256, color.Black, color.White, qrFilePath)
 	if errQrcode != nil {
 		l.appCtx.Logger().Error(errQrcode)
 	} else {
-		qrCodeKey := fmt.Sprintf("group/avatar/%d/%s", groupId, qrFileName)
+		qrCodeKey := fmt.Sprintf("group/%d/qrcode/%s", groupId, qrFileName)
 		qrcodeUrl, errQrcode = l.appCtx.ObjectStorage().UploadObject(qrCodeKey, qrFilePath)
 		if errQrcode != nil {
 			l.appCtx.Logger().WithFields(logrus.Fields(claims)).WithFields(logrus.Fields(claims)).Error("upload object file error: ", errQrcode)
@@ -49,8 +49,25 @@ func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq, claims baseDto.ThkClaim
 		qrcodeUrl = &emptyStr
 	}
 
+	avatar := req.GroupAvatar
+	if avatar == "" {
+		ids := []int64{req.UId}
+		ids = append(ids, req.Members...)
+		avatarFileName := fmt.Sprintf("%d-out.png", groupId)
+		avtarPath, errAvatar := l.generateGroupAvatar(groupId, ids, avatarFileName, claims)
+		if errAvatar != nil {
+			return nil, errAvatar
+		}
+		avatarKey := fmt.Sprintf("group/%d/avatar/%s", groupId, avatarFileName)
+		avatarUrl, errUpload := l.appCtx.ObjectStorage().UploadObject(avatarKey, avtarPath)
+		if errUpload != nil {
+			l.appCtx.Logger().WithFields(logrus.Fields(claims)).WithFields(logrus.Fields(claims)).Error("upload object file error: ", errUpload)
+		}
+		avatar = *avatarUrl
+	}
+
 	group, err := l.appCtx.GroupModel().CreateGroup(groupId, 0, req.UId, displayId, req.GroupName,
-		"", req.GroupAnnounce, *qrcodeUrl, nil, memberCount, model.EnterFlagNoReview,
+		avatar, req.GroupAnnounce, *qrcodeUrl, nil, memberCount, model.EnterFlagNoReview,
 	)
 	if err != nil {
 		return nil, err
@@ -77,6 +94,23 @@ func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq, claims baseDto.ThkClaim
 		Group: l.groupModel2Dto(group),
 	}
 	return createGroupRes, nil
+}
+
+func (l *GroupLogic) generateGroupAvatar(groupId int64, members []int64, outName string, claims baseDto.ThkClaims) (string, error) {
+	req := &userDto.BatchQueryUser{Ids: members}
+	userMap, err := l.appCtx.UserApi().BatchQueryUsers(req, claims)
+	if err != nil {
+		return "", err
+	}
+	urls := make([]string, 0)
+	prefix := fmt.Sprintf("%d", groupId)
+	for _, v := range userMap {
+		if v.Avatar != nil {
+			urls = append(urls, *v.Avatar)
+		}
+	}
+	groupAvatarGenerator := NewGroupAvatarGenerator("tmp", prefix, outName)
+	return groupAvatarGenerator.Generate(urls)
 }
 
 func (l *GroupLogic) QueryGroup(req *dto.QueryGroupReq) (*dto.QueryGroupRes, error) {

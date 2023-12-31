@@ -20,6 +20,7 @@ type CreateGroupReq struct {
 	UId           int64   `json:"u_id"`
 	Members       []int64 `json:"members"`
 	GroupName     string  `json:"group_name"`
+	GroupAvatar   string  `json:"group_avatar"`
 	GroupAnnounce string  `json:"group_announce"` // 群公告
 	GroupType     int     `json:"group_type"`     // 2普通群，3 超级群
 }

@@ -3,12 +3,13 @@ module github.com/thk-im/thk-im-group-server
 go 1.19
 
 require (
+	github.com/disintegration/imaging v1.6.2
 	github.com/gin-gonic/gin v1.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
-	github.com/thk-im/thk-im-base-server v0.0.0-20231228134043-304d36641379
-	github.com/thk-im/thk-im-msgapi-server v0.0.0-20231230124045-d10aa14467a7
-	github.com/thk-im/thk-im-user-server v0.0.0-20231228134223-109387e54f8b
+	github.com/thk-im/thk-im-base-server v0.0.0-20231231091140-a2d81cd7fcbc
+	github.com/thk-im/thk-im-msgapi-server v0.0.0-20231231092838-a5200a014062
+	github.com/thk-im/thk-im-user-server v0.0.0-20231231102427-b44020eb520b
 	gorm.io/gorm v1.25.5
 )
 
@@ -74,6 +75,7 @@ require (
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63 // indirect
+	golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
