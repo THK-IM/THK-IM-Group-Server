@@ -112,34 +112,44 @@ func queryGroup(appCtx *app.Context) gin.HandlerFunc {
 	groupLogic := logic.NewGroupLogic(appCtx)
 	return func(ctx *gin.Context) {
 		claims := ctx.MustGet(baseMiddleware.ClaimsKey).(baseDto.ThkClaims)
-		req := &dto.QueryGroupReq{}
-		displayId := ctx.Param("id")
-		strId := ctx.Query("id")
-		if displayId != "" {
-			req.DisplayId = &displayId
-		}
+		strId := ctx.Param("id")
+		var groupId int64 = 0
 		if strId != "" {
 			id, errId := strconv.ParseInt(strId, 10, 64)
 			if errId != nil {
 				appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("queryGroup %v", errId)
 				baseDto.ResponseBadRequest(ctx)
 			}
-			req.GroupId = &id
+			groupId = id
 		}
 
 		requestUid := ctx.GetInt64(userSdk.UidKey)
-		if requestUid > 0 && requestUid != req.UId {
-			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("queryGroup %d, %d", requestUid, req.UId)
-			baseDto.ResponseForbidden(ctx)
-			return
-		}
 
-		resp, errQuery := groupLogic.QueryGroup(req)
+		resp, errQuery := groupLogic.QueryGroup(groupId)
 		if errQuery != nil {
-			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("queryGroup %v %v", req, errQuery)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("queryGroup %v %v", requestUid, errQuery)
 			baseDto.ResponseInternalServerError(ctx, errQuery)
 		} else {
-			appCtx.Logger().WithFields(logrus.Fields(claims)).Infof("queryGroup %v %v", req, resp)
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Infof("queryGroup %v %v", requestUid, resp)
+			baseDto.ResponseSuccess(ctx, resp)
+		}
+	}
+}
+
+func searchGroup(appCtx *app.Context) gin.HandlerFunc {
+	groupLogic := logic.NewGroupLogic(appCtx)
+	return func(ctx *gin.Context) {
+		claims := ctx.MustGet(baseMiddleware.ClaimsKey).(baseDto.ThkClaims)
+		displayId := ctx.Query("display_id")
+
+		requestUid := ctx.GetInt64(userSdk.UidKey)
+
+		resp, errQuery := groupLogic.SearchGroup(displayId)
+		if errQuery != nil {
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Errorf("queryGroup %v %v", requestUid, errQuery)
+			baseDto.ResponseInternalServerError(ctx, errQuery)
+		} else {
+			appCtx.Logger().WithFields(logrus.Fields(claims)).Infof("queryGroup %v %v", requestUid, resp)
 			baseDto.ResponseSuccess(ctx, resp)
 		}
 	}

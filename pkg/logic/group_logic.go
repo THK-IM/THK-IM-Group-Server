@@ -113,27 +113,26 @@ func (l *GroupLogic) generateGroupAvatar(groupId int64, members []int64, outName
 	return groupAvatarGenerator.Generate(urls)
 }
 
-func (l *GroupLogic) QueryGroup(req *dto.QueryGroupReq) (*dto.QueryGroupRes, error) {
-	if req.GroupId != nil {
-		group, err := l.appCtx.GroupModel().FindGroup(*req.GroupId)
-		if err != nil {
-			return nil, err
-		}
-		if group.Id == 0 {
-			return nil, baseErrorx.ErrParamsError
-		}
-		return &dto.QueryGroupRes{Group: l.groupModel2Dto(group)}, nil
-	} else if req.DisplayId != nil {
-		group, err := l.appCtx.GroupModel().FindGroupByDisplayId(*req.DisplayId)
-		if err != nil {
-			return nil, err
-		}
-		if group.Id == 0 {
-			return nil, baseErrorx.ErrParamsError
-		}
-		return &dto.QueryGroupRes{Group: l.groupModel2Dto(group)}, nil
+func (l *GroupLogic) QueryGroup(id int64) (*dto.QueryGroupRes, error) {
+	group, err := l.appCtx.GroupModel().FindGroup(id)
+	if err != nil {
+		return nil, err
 	}
-	return nil, baseErrorx.ErrParamsError
+	if group.Id == 0 {
+		return nil, baseErrorx.ErrParamsError
+	}
+	return &dto.QueryGroupRes{Group: l.groupModel2Dto(group)}, nil
+}
+
+func (l *GroupLogic) SearchGroup(displayId string) (*dto.QueryGroupRes, error) {
+	group, err := l.appCtx.GroupModel().FindGroupByDisplayId(displayId)
+	if err != nil {
+		return nil, err
+	}
+	if group.Id == 0 {
+		return nil, baseErrorx.ErrParamsError
+	}
+	return &dto.QueryGroupRes{Group: l.groupModel2Dto(group)}, nil
 }
 
 func (l *GroupLogic) UpdateGroup(req *dto.UpdateGroupReq, claims baseDto.ThkClaims) (*dto.UpdateGroupRes, error) {

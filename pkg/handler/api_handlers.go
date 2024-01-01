@@ -28,6 +28,7 @@ func RegisterGroupApiHandlers(appCtx *app.Context) {
 	groupRoute.Use(authMiddleware)
 	{
 		groupRoute.POST("", createGroup(appCtx))                               // 创建群
+		groupRoute.GET("", searchGroup(appCtx))                                // 搜索群资料
 		groupRoute.GET("/:id", queryGroup(appCtx))                             // 查询群资料
 		groupRoute.PUT("/:id", updateGroup(appCtx))                            // 修改群信息
 		groupRoute.POST("/:id/join", joinGroup(appCtx))                        // 加入群
