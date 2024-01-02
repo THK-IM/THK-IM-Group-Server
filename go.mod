@@ -7,9 +7,9 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
-	github.com/thk-im/thk-im-base-server v0.0.0-20231231091140-a2d81cd7fcbc
-	github.com/thk-im/thk-im-msgapi-server v0.0.0-20231231092838-a5200a014062
-	github.com/thk-im/thk-im-user-server v0.0.0-20231231102427-b44020eb520b
+	github.com/thk-im/thk-im-base-server v0.0.0-20240102130158-f585b8a86afa
+	github.com/thk-im/thk-im-msgapi-server v0.0.0-20240102131112-0fc9b32b3457
+	github.com/thk-im/thk-im-user-server v0.0.0-20240102130947-84ccbd0ed887
 	gorm.io/gorm v1.25.5
 )
 
