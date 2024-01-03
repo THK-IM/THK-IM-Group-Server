@@ -19,7 +19,7 @@ func SendReviewGroupJoinMessage(appCtx *app.Context, apply *model.GroupMemberApp
 		MTime: 0,
 		Count: 100,
 	}
-	sessionUsersResp, errSu := appCtx.MsgApi().QuerySessionUsers(sessionId, querySessionUsersReq, claims)
+	sessionUsersResp, errSu := appCtx.MsgApi().QueryLatestSessionUsers(sessionId, querySessionUsersReq, claims)
 	if errSu != nil {
 		return errSu
 	}
