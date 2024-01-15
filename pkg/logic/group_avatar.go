@@ -119,10 +119,15 @@ func (g *GroupAvatarGenerator) Compose(paths []string, gap int) (string, error) 
 		tempCol = 0
 	}
 	imagePath := fmt.Sprintf("%s/%s", g.dir, g.outName)
-	err := imaging.Save(backImg, imagePath)
-	if err != nil {
-		fmt.Println(err)
+
+	for _, path := range paths {
+		errRemove := os.Remove(path)
+		if errRemove != nil {
+			fmt.Println(errRemove)
+		}
 	}
+
+	err := imaging.Save(backImg, imagePath)
 	return imagePath, err
 }
 

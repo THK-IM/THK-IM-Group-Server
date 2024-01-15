@@ -14,6 +14,7 @@ import (
 	msgModel "github.com/thk-im/thk-im-msgapi-server/pkg/model"
 	userDto "github.com/thk-im/thk-im-user-server/pkg/dto"
 	"image/color"
+	"os"
 	"strconv"
 )
 
@@ -43,6 +44,10 @@ func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq, claims baseDto.ThkClaim
 		if errQrcode != nil {
 			l.appCtx.Logger().WithFields(logrus.Fields(claims)).WithFields(logrus.Fields(claims)).Error("upload object file error: ", errQrcode)
 		}
+		errRemove := os.Remove(qrFilePath)
+		if errRemove != nil {
+			l.appCtx.Logger().WithFields(logrus.Fields(claims)).WithFields(logrus.Fields(claims)).Error("remove file error: ", errRemove)
+		}
 	}
 	if qrcodeUrl == nil {
 		emptyStr := ""
@@ -53,6 +58,9 @@ func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq, claims baseDto.ThkClaim
 	if avatar == "" {
 		ids := []int64{req.UId}
 		ids = append(ids, req.Members...)
+		if len(ids) > 9 {
+			ids = ids[:9]
+		}
 		avatarFileName := fmt.Sprintf("%d-out.png", groupId)
 		avtarPath, errAvatar := l.generateGroupAvatar(groupId, ids, avatarFileName, claims)
 		if errAvatar != nil {
@@ -62,6 +70,10 @@ func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq, claims baseDto.ThkClaim
 		avatarUrl, errUpload := l.appCtx.ObjectStorage().UploadObject(avatarKey, avtarPath)
 		if errUpload != nil {
 			l.appCtx.Logger().WithFields(logrus.Fields(claims)).WithFields(logrus.Fields(claims)).Error("upload object file error: ", errUpload)
+		}
+		errRemove := os.Remove(avtarPath)
+		if errRemove != nil {
+			l.appCtx.Logger().WithFields(logrus.Fields(claims)).WithFields(logrus.Fields(claims)).Error("remove file error: ", errRemove)
 		}
 		avatar = *avatarUrl
 	}
