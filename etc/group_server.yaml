@@ -29,7 +29,7 @@ MysqlSource:
   ConnMaxLifeTime: 3600
   ConnMaxIdleTime: 3600
 ObjectStorage:
-  Endpoint: ${OS_Endpoint}
+  Endpoint: ${OS_ENDPOINT}
   Bucket: ${OS_BUCKET}
   AK: ${OS_AK}
   SK: ${OS_SK}
