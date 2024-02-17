@@ -46,7 +46,7 @@ Metric:
   PushGateway: ""
   PushInterval: 10
 Sdks:
-  - Name: msg_api
-    Endpoint: "http://host.docker.internal:20000"
   - Name: user_api
-    Endpoint: "http://host.docker.internal:10000"
+    Endpoint: "http://user-api.thkim.com:10000"
+  - Name: msg_api
+    Endpoint: "http://msg-api.thkim.com:20000"
