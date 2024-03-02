@@ -7,10 +7,10 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
-	github.com/thk-im/thk-im-base-server v0.0.0-20240301021810-cb8a0d4eac60
-	github.com/thk-im/thk-im-msgapi-server v0.0.0-20240301021954-8515b3226826
-	github.com/thk-im/thk-im-user-server v0.0.0-20240301021919-2f0776a91eeb
-	gorm.io/gorm v1.25.6
+	github.com/thk-im/thk-im-base-server v0.0.0-20240302052742-d05396b5ff67
+	github.com/thk-im/thk-im-msgapi-server v0.0.0-20240302053900-11f932af7fbe
+	github.com/thk-im/thk-im-user-server v0.0.0-20240302053004-f63fb5180112
+	gorm.io/gorm v1.25.7
 )
 
 require (
@@ -70,7 +70,7 @@ require (
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/redis/go-redis/v9 v9.4.0 // indirect
+	github.com/redis/go-redis/v9 v9.5.1 // indirect
 	github.com/rs/xid v1.5.0 // indirect
 	github.com/segmentio/kafka-go v0.4.47 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
