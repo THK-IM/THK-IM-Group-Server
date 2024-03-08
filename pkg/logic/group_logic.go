@@ -109,8 +109,8 @@ func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq, claims baseDto.ThkClaim
 }
 
 func (l *GroupLogic) generateGroupAvatar(groupId int64, members []int64, outName string, claims baseDto.ThkClaims) (string, error) {
-	req := &userDto.BatchQueryUser{Ids: members}
-	userMap, err := l.appCtx.UserApi().BatchQueryUsers(req, claims)
+	req := &userDto.QueryUsers{Ids: members}
+	userMap, err := l.appCtx.UserApi().QueryUsers(req, claims)
 	if err != nil {
 		return "", err
 	}

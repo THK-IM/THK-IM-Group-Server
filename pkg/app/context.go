@@ -21,6 +21,10 @@ func (c *Context) GroupMemberApplyModel() model.GroupMemberApplyModel {
 	return c.Context.ModelMap["group_apply_member"].(model.GroupMemberApplyModel)
 }
 
+func (c *Context) LoginApi() userSdk.LoginApi {
+	return c.Context.SdkMap["login_api"].(userSdk.LoginApi)
+}
+
 func (c *Context) UserApi() userSdk.UserApi {
 	return c.Context.SdkMap["user_api"].(userSdk.UserApi)
 }
