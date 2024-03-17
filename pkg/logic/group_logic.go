@@ -85,13 +85,14 @@ func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq, claims baseDto.ThkClaim
 		return nil, err
 	}
 	createSessionReq := &msgDto.CreateSessionReq{
-		UId:      req.UId,
-		Type:     req.GroupType,
-		EntityId: groupId,
-		Members:  req.Members,
-		ExtData:  nil,
-		Name:     req.GroupName,
-		Remark:   "",
+		UId:          req.UId,
+		Type:         req.GroupType,
+		EntityId:     groupId,
+		Members:      req.Members,
+		ExtData:      nil,
+		Name:         req.GroupName,
+		Remark:       "",
+		FunctionFlag: msgDto.FuncTextFlag | msgDto.FuncAudioFlag | msgDto.ImageFlag | msgDto.VideoFlag | msgDto.ForwardFlag | msgDto.ForwardFlag,
 	}
 	createSessionResp, createErr := l.appCtx.MsgApi().CreateSession(createSessionReq, claims)
 	if createErr != nil {
