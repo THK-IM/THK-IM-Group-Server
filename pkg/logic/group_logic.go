@@ -92,7 +92,7 @@ func (l *GroupLogic) CreatGroup(req *dto.CreateGroupReq, claims baseDto.ThkClaim
 		ExtData:      nil,
 		Name:         req.GroupName,
 		Remark:       "",
-		FunctionFlag: msgDto.FuncTextFlag | msgDto.FuncAudioFlag | msgDto.ImageFlag | msgDto.VideoFlag | msgDto.ForwardFlag | msgDto.ForwardFlag,
+		FunctionFlag: msgDto.FuncAll,
 	}
 	createSessionResp, createErr := l.appCtx.MsgApi().CreateSession(createSessionReq, claims)
 	if createErr != nil {

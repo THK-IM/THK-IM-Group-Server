@@ -7,9 +7,9 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
-	github.com/thk-im/thk-im-base-server v0.0.0-20240309075748-faace620568a
-	github.com/thk-im/thk-im-msgapi-server v0.0.0-20240315125023-57ecd915f930
-	github.com/thk-im/thk-im-user-server v0.0.0-20240311072255-c20b470ace82
+	github.com/thk-im/thk-im-base-server v0.0.0-20240329115557-05888130b981
+	github.com/thk-im/thk-im-msgapi-server v0.0.0-20240329143121-752bfa32ee16
+	github.com/thk-im/thk-im-user-server v0.0.0-20240331125412-5ba50865d126
 	gorm.io/gorm v1.25.7
 )
 
@@ -34,6 +34,7 @@ require (
 	github.com/go-resty/resty/v2 v2.11.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/hashicorp/consul/api v1.27.0 // indirect
